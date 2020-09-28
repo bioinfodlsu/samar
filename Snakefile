@@ -1,25 +1,50 @@
-rule ConvertToFastA:
+configfile: "config_file.yaml"
+workdir: config["out_dir"]
+
+fasta_interleave = srcdir("scripts/fasta-interleave.sh")
+seq_count = srcdir("scripts/seq_count.py")
+multimapping: config["multi-mapping"]
+def get_read1(wildcards):
+    return config["samples"][wildcards.sample_id][0]
+
+def get_read2(wildcards):
+    return config["samples"][wildcards.sample_id][1]
+
+rule all:
     input:
-        "data/quer/fastq/{sample}.fastq"
-    output:
-        "data/quer/fasta/{sample}.fasta"
-    script:
-        "scripts/fastqToFastA.py"
-        
-rule Align:
+        [
+            expand("last_counts/{sample_id}/{sample_id}.counts",sample_id=config["samples"].keys())
+        ]
+
+rule last_db:
     input:
-    	quer="data/quer/fasta/{sample}.fasta",
-    	ref="data/ref/UP000000803_7227.fasta"
+         reference = config["reference_p"]
     output:
-    	"alignments/{sample}_alg.maf"
+       touch('last_index/index.done')
+    params:
+       index_basename="{0}/last_index/index".format(config["out_dir"])
     shell:
-    	"lastdb flyDB {input.ref} -p \n"
-    	"lastal flyDB {input.quer} -p BL62 -F 15 > {output}"
-    	
-rule ConvertToCSV:
+       "lastdb -p {params.index_basename} {input.reference}"
+
+rule align_last:
     input:
-    	"alignments/{sample}_alg.maf"
+        reference_flag = "last_index/index.done",
+        reads1 = get_read1,
+        reads2 = get_read2
+    params:
+        last_index_basename="{0}/last_index/index".format(config["out_dir"])
+
     output:
-    	"CSV/{sample}.csv"
-    script:
-    	"scripts/MAFtoCSV.py"
+        "last_alignments/{sample_id}.tab"
+
+    shell:
+        #"{0} {{input.reads1}} {{input.reads2}} | lastal -i1 -p BL62 -F15 {params.last_index_basename} | maf-convert tab > {{output}}".format(os.path.join(workflow.basedir,"scripts2","my-fasta-interleave.sh"))
+        "{fasta_interleave}"+" {input.reads1} {input.reads2} | lastal -i1 -p BL62 -F15 {params.last_index_basename} | maf-convert tab > {output}"
+
+rule count_last:
+    input:
+        alignments = "last_alignments/{sample_id}.tab"
+    output:
+        "last_counts/{sample_id}/{sample_id}.counts"
+    shell:
+        "python {seq_count} {input} {output} {multimapping}"
