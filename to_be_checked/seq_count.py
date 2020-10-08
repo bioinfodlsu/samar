@@ -86,15 +86,19 @@ def main(input_alns, out_counts, multi_mapping, frag_len_mean, frag_len_std):
         #i.e. last-pair-probs was run with -m less than 0.5
 
         with open(input_alns) as infile:
-            for key,group in itertools.groupby(FileFilter(infile), lambda x : x[6].rsplit("/",1)[0]):
+            for pair_id,group in itertools.groupby(FileFilter(infile), lambda x : x[6].rsplit("/",1)[0]):
 
                 block = list(group)
 
-                alns1 = [x for x in block if x[6] == key+"/1"]
-                alns2 = [x for x in block if x[6] == key+"/2"]
+                alns1 = [x for x in block if x[6] == pair_id+"/1"]
+                alns2 = [x for x in block if x[6] == pair_id+"/2"]
 
-                assert len(alns1) <= 1
-                assert len(alns2) <= 1
+                try:
+                    assert(len(alns1) <= 1)
+                    assert(len(alns2) <= 1)
+                except AssertionError:
+                    print("Too many alignments for read pair {}".format(pair_id))
+                    continue
 
                 if len(alns1) ==  1 and len(alns2) == 1 :
                     if alns1[0][9] == alns2[0][9]:
