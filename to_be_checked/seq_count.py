@@ -41,7 +41,6 @@ def main(input_alns, out_counts, frag_len_mean, frag_len_std):
          return False   
  
     #First pass
-    final = {}
     with open(input_alns) as infile:
         for key,group in itertools.groupby(FileFilter(infile), lambda x : x[6].rsplit("/",1)[0]):
 
@@ -76,7 +75,7 @@ def main(input_alns, out_counts, frag_len_mean, frag_len_std):
     #second pass
     final = copy.deepcopy(unique)
         
-    
+   
     def update_from_single_end(alns):
         ref_ids = [aln[1] for aln in alns]
         unique_counts = [unique[ref_id] for ref_id in ref_ids]
