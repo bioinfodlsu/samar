@@ -2,7 +2,6 @@
 import itertools
 import csv
 import argparse
-import copy
 
 class Tab_alns:
     def __init__(self,tab_line):
@@ -13,6 +12,18 @@ class Tab_alns:
         self.query = tab_line[6]
         self.query_strand = tab_line[9]
 
+class Counts:
+    def  __init__(self,aln): #aln is a Tab_alns object
+        self.length = aln.ref_length
+        self.count_array = [0]*aln.ref_length
+        self.unique_count = 0.0
+        self.unique_count_norm = 0.0
+        self.final_count = 0.0
+        self.final_count_norm = 0.0
+        self.tpm = 0.0
+    
+    def __str__(self):
+        return 'length:{self.length}    unique_count:{self.unique_count}    unique_count_norm:{self.unique_count_norm}   final_count:{self.final_count}    final_count_norm:{self.final_count_norm}    tpm:{self.tpm}'.format(self=self)
 
 def FileFilter(infile):
     for line in infile:
@@ -33,12 +44,12 @@ def is_concordant(p1,p2): #given two alignments, returns (True,start,end) if con
 
     return(False,0,0)
 
-def unique_pass(input_alns,unique):
+def unique_pass(input_alns,counts_dict):
 
     def update_unique_single_end(aln):
-        unique[aln.ref][-1] += 1 #update count
+        counts_dict[aln.ref].unique_count += 1 #update count
         for i in range(aln.ref_start,aln.ref_start + aln.ref_aln_width):
-            unique[aln.ref][i] +=1
+            counts_dict[aln.ref].count_array[i] +=1
 
 
     with open(input_alns) as infile:
@@ -50,16 +61,20 @@ def unique_pass(input_alns,unique):
 
             #initialize unique[ref_id] to a 0-vector of length of ref_id sequence. need to do this outside the unique checking logic so that we are ready for second pass
             for aln in alns1+alns2:
-                unique[aln.ref] = unique.get(aln.ref,[0]*(aln.ref_length+1)) #final element is the count of fragments
-
+                #unique[aln.ref] = unique.get(aln.ref,[0]*(aln.ref_length+1)) #final element is the count of fragments
+                if aln.ref not in counts_dict:
+                    counts_dict[aln.ref] = Counts(aln)
 
             #if its a unique pair
             if len(alns1) ==  1 and len(alns2) == 1 :
                 conc,frag_start,frag_end = is_concordant(alns1[0], alns2[0])
                 if conc:
-                   unique[alns1[0].ref][-1] += 1 #update count
+                   #unique[alns1[0].ref][-1] += 1 #update count
+                   counts_dict[alns1[0].ref].unique_count += 1
                    for i in range(frag_start,frag_end+1): #assuming gapless aln
-                       unique[alns1[0].ref][i] +=1
+                       #unique[alns1[0].ref][i] +=1
+                       counts_dict[alns1[0].ref].count_array[i] +=1
+
 
             #if only read1 has an alignment and it's unique
             elif len(alns1) == 1 and len(alns2) == 0:
@@ -70,28 +85,32 @@ def unique_pass(input_alns,unique):
             elif len(alns2) == 1 and len(alns1) == 0:
                 update_unique_single_end(alns2[0])
 
-    #normalize unique counts by length (of non-zero counts)
-    for k,v in unique.items():
-        nonZeros = len(v)-1-v[:-1].count(0)
-        if v[-1] != 0 :
-            v.append(v[-1]/nonZeros)
+    #done with first pass. 1. set final_count to be unique_count and 2.normalize unique counts by length (of non-zero counts)
+    for k,v in counts_dict.items():
+        
+        v.final_count = v.unique_count
+        
+        #nonZeros = len(v)-1-v[:-1].count(0)
+        nonZeros = len(v.count_array) - v.count_array.count(0)
+        if v.unique_count != 0 :
+            v.unique_count_norm = v.unique_count/nonZeros
         else:
-            v.append(0)
+            v.unique_count_norm = 0
 
-def rescue_pass(input_alns,unique, final):
+def rescue_pass(input_alns,counts_dict):
 
     def update_rescue_single_end(alns):
         ref_ids = [aln.ref for aln in alns]
-        unique_norm_counts = [unique[ref_id][-1] for ref_id in ref_ids]
+        unique_norm_counts = [counts_dict[ref_id].unique_count_norm for ref_id in ref_ids]
         denom = sum(unique_norm_counts)
         if denom != 0 :
             props = [c/denom for c in unique_norm_counts]
             for i,ref_id in enumerate(ref_ids):
-                final[ref_id] += props[i]
+                counts_dict[ref_id].final_count += props[i]
         else:
             denom = len(ref_ids)
             for ref_id in ref_ids:
-                final[ref_id] += 1/denom
+                counts_dict[ref_id].final_count += 1/denom
 
     with open(input_alns) as infile:
         for key,group in itertools.groupby(FileFilter(infile), lambda x : x[6].rsplit("/",1)[0]):
@@ -108,16 +127,16 @@ def rescue_pass(input_alns,unique, final):
                         if is_concordant(p1,p2):
                             ref_ids.append(p1.ref)
 
-                unique_norm_counts = [unique[ref_id][-1] for ref_id in ref_ids]
+                unique_norm_counts = [counts_dict[ref_id].unique_count_norm for ref_id in ref_ids]
                 denom = sum(unique_norm_counts)
                 if denom != 0 :
                     props = [c/denom for c in unique_norm_counts]
                     for i,ref_id in enumerate(ref_ids):
-                        final[ref_id] += props[i]
+                        counts_dict[ref_id].final_count += props[i]
                 else: #distribute evenly
                     denom = len(ref_ids)
                     for ref_id in ref_ids:
-                        final[ref_id] += 1/denom
+                        counts_dict[ref_id].final_count += 1/denom
 
             elif len(alns1) > 1 and len(alns2) == 0:
                 update_rescue_single_end(alns1)
@@ -141,29 +160,59 @@ def main(input_alns, out_counts, frag_len_mean, frag_len_std):
     lower = frag_len_mean - 3* frag_len_std
     upper = frag_len_mean + 3* frag_len_std
 
-    unique = {} #key = peptide ID, value = list of length size of peptide with number of fragments covering each position
+    counts_dict = {} #key = peptide ID, value = object of class Counts
 
     #first pass
-    unique_pass(input_alns,unique)
+    unique_pass(input_alns,counts_dict)
+    
+    # print("after first pass")
+    # for k,v in counts_dict.items():
+    #     print(k)
+    #     print(v)
 
+ 
     #second pass
-    global final
-    final={}
-    for k,v in unique.items():
-        final[k] = v[-2] #current unique counts
-    #final = copy.deepcopy(unique)
-    rescue_pass(input_alns,unique, final)
+    rescue_pass(input_alns,counts_dict)
+    # print("after rescue pass")
+    # for k,v in counts_dict.items():
+    #     print(k)
+    #     print(v)
 
-    #output
+ 
+    
+    #compute TPM
+    #read/length
+    scaling_factor = 0.0
+    for counts in counts_dict.values():
+        counts.final_count_norm = counts.final_count/counts.length
+        scaling_factor += counts.final_count_norm
+    
+    # print(scaling_factor)
+    
+    # print("after normalized final")
+    # for k,v in counts_dict.items():
+    #     print(k)
+    #     print(v)
+    
+    for counts in counts_dict.values():
+        if scaling_factor != 0:
+            counts.tpm = counts.final_count_norm * 1000000/scaling_factor
+    
+    # print("after tpm")
+    # for k,v in counts_dict.items():
+    #     print(k)
+    #     print(v)
+          
     with open(out_counts,"w") as tab_file:
         writer = csv.writer(tab_file, delimiter='\t')
 
         #adding Header
-        writer.writerow(["Ref_Seq_ID","Seq_length","Num_of_Alg"])
+        writer.writerow(["Name","Length","EffectiveLength","TPM", "NumReads"])
 
-        for key, value in final.items():
-            writer.writerow([key,len(unique[key])-2,value])
-    return (unique,final)
+        for key, counts in counts_dict.items():
+            writer.writerow([key,counts.length,counts.length,counts.tpm,counts.final_count])
+    
+    return counts_dict
 
 #%%
 if __name__ == "__main__":
@@ -178,7 +227,7 @@ if __name__ == "__main__":
     main(args.input_file,args.output_file, args.frag_len_mean, args.frag_len_std)
 
 #%%
-# unique,final=main("/home/anish/Desktop/last_multimap/1mil.tab","out",82,8)
+#counts=main("/home/anish/Desktop/last_multimap/1mil.tab","out",82,8)
 #
 # uf={}
 # for k,v in final.items():
