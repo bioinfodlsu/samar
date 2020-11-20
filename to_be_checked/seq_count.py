@@ -2,6 +2,7 @@
 import itertools
 import csv
 import argparse
+from Bio import SeqIO
 
 class Tab_alns:
     def __init__(self,tab_line):
@@ -13,9 +14,9 @@ class Tab_alns:
         self.query_strand = tab_line[9]
 
 class Counts:
-    def  __init__(self,aln): #aln is a Tab_alns object
-        self.length = aln.ref_length
-        self.count_array = [0]*aln.ref_length
+    def  __init__(self,ref_length): 
+        self.length = ref_length
+        self.count_array = [0]*ref_length
         self.unique_count = 0.0
         self.unique_count_norm = 0.0
         self.final_count = 0.0
@@ -59,12 +60,7 @@ def unique_pass(input_alns,counts_dict):
             alns1 = [Tab_alns(x) for x in block if x[6] == key+"/1"] #alignments of read 1
             alns2 = [Tab_alns(x) for x in block if x[6] == key+"/2"] #alignments of read 2
 
-            #initialize unique[ref_id] to a 0-vector of length of ref_id sequence. need to do this outside the unique checking logic so that we are ready for second pass
-            for aln in alns1+alns2:
-                #unique[aln.ref] = unique.get(aln.ref,[0]*(aln.ref_length+1)) #final element is the count of fragments
-                if aln.ref not in counts_dict:
-                    counts_dict[aln.ref] = Counts(aln)
-
+            
             #if its a unique pair
             if len(alns1) ==  1 and len(alns2) == 1 :
                 conc,frag_start,frag_end = is_concordant(alns1[0], alns2[0])
@@ -87,7 +83,7 @@ def unique_pass(input_alns,counts_dict):
 
     #done with first pass. 1. set final_count to be unique_count and 2.normalize unique counts by length (of non-zero counts)
     for k,v in counts_dict.items():
-        
+	        
         v.final_count = v.unique_count
         
         #nonZeros = len(v)-1-v[:-1].count(0)
@@ -148,7 +144,7 @@ def rescue_pass(input_alns,counts_dict):
                 continue
 
 
-def main(input_alns, out_counts, frag_len_mean, frag_len_std):
+def main(input_alns, out_counts, frag_len_mean, frag_len_std,reference):
     '''
     Does 2 passes over the alignments.
     In the first pass, we only consider reads with unique alignments. Counts are recorded in the dict unique.
@@ -161,6 +157,10 @@ def main(input_alns, out_counts, frag_len_mean, frag_len_std):
     upper = frag_len_mean + 3* frag_len_std
 
     counts_dict = {} #key = peptide ID, value = object of class Counts
+    
+    #initiate counts_dict
+    for seq_record in SeqIO.parse(reference,"fasta"):
+        counts_dict[seq_record.id] = Counts(len(seq_record))
 
     #first pass
     unique_pass(input_alns,counts_dict)
@@ -209,7 +209,7 @@ def main(input_alns, out_counts, frag_len_mean, frag_len_std):
         #adding Header
         writer.writerow(["Name","Length","EffectiveLength","TPM", "NumReads"])
 
-        for key, counts in counts_dict.items():
+        for key, counts in sorted(counts_dict.items()):
             writer.writerow([key,counts.length,counts.length,counts.tpm,counts.final_count])
     
     return counts_dict
@@ -221,10 +221,11 @@ if __name__ == "__main__":
     parser.add_argument('output_file',help="output file containing counts")
     #parser.add_argument('--multi_mapping',action='store_true')
     parser.add_argument('--frag_len_mean',type=float,help="mean of fragment length, when translated. Use the same value as last-pair-probs")
-    parser.add_argument('--frag_len_std',type=float,help="standard deviation of fragment length, when translated. Use the same value as last-pair-probs")
-
+    parser.add_argument('--frag_len_std',type=float,help="standard deviation of fragment length, when translated. Use the same value as last-pair-probs") 
+    parser.add_argument('--reference',help="fasta file containing the reference protein sequences")
+    
     args = parser.parse_args()
-    main(args.input_file,args.output_file, args.frag_len_mean, args.frag_len_std)
+    main(args.input_file,args.output_file, args.frag_len_mean, args.frag_len_std, args.reference)
 
 #%%
 #counts=main("/home/anish/Desktop/last_multimap/1mil.tab","out",82,8)
