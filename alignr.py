@@ -31,19 +31,19 @@ args=parser.parse_args()
 #count_last
 if(args.count_last or args.count):
     #os.system("snakemake last_counts/{0}/{0}.counts".format(args.count_last))
-    snakemake.snakemake("Snakemake",targets=["count_last"])
+    snakemake.snakemake("Snakemake",targets=["count_last"],use_conda=True)
 #align_last    
 elif(args.align_last or args.align):
     #os.system("snakemake last_alignments/{0}.tab".format(args.align_last)) 
-    snakemake.snakemake("Snakemake",targets=["align_last"])
+    snakemake.snakemake("Snakemake",targets=["align_last"],use_conda=True)
 #last_db
 elif(args.last_db or args.index):
     #os.system("snakemake last_index/index.done")
-    snakemake.snakemake("Snakemake",targets=["last_db"])
+    snakemake.snakemake("Snakemake",targets=["last_db"],use_conda=True)
 #all
 elif(args.all):
     #os.system("snakemake")
-    snakemake.snakemake("Snakemake",targets=["all"])
+    snakemake.snakemake("Snakemake",targets=["all"],use_conda=True)
 
 
 

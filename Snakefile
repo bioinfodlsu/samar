@@ -23,6 +23,8 @@ rule last_db:
        touch('last_index/index.done')
     params:
        index_basename="{0}/last_index/index".format(config["out_dir"])
+    conda:
+    	"env/last.yaml"
     shell:
        "lastdb -p {params.index_basename} {input.reference}"
 
@@ -36,7 +38,8 @@ rule align_last:
 
     output:
         "last_alignments/{sample_id}.tab"
-
+    conda:
+    	"env/last.yaml"
     shell:
         #"{0} {{input.reads1}} {{input.reads2}} | lastal -i1 -p BL62 -F15 {params.last_index_basename} | maf-convert tab > {{output}}".format(os.path.join(workflow.basedir,"scripts2","my-fasta-interleave.sh"))
         "{fasta_interleave}"+" {input.reads1} {input.reads2} | lastal -i1 -p BL62 -F15 {params.last_index_basename} | maf-convert tab > {output}"
@@ -46,5 +49,7 @@ rule count_last:
         alignments = "last_alignments/{sample_id}.tab"
     output:
         "last_counts/{sample_id}/{sample_id}.counts"
+    conda:
+    	"env/counting.yaml"
     shell:
         "python {seq_count} {input} {output} {multimapping}"
