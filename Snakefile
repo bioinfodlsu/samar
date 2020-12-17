@@ -3,6 +3,7 @@ workdir: config["out_dir"]
 
 fastq_to_fasta_interleave = srcdir("scripts/fastq-to-fasta-interleave.sh")
 seq_count = srcdir("scripts/seq_count.py")
+trans_6frame = srcdir("scripts/translate_6frames.py")
 
 def get_read1(wildcards):
     return config["samples"][wildcards.sample_id][0]
@@ -11,17 +12,22 @@ def get_read2(wildcards):
     return config["samples"][wildcards.sample_id][1]
     
 def getMean(wildcard):
-    with open("last_alignments/{}.frag_len_est".format(wildcard)) as f:
-    	for line in f:
-    		if line.startswith("# estimated mean distance"):
-    			return(line.rstrip().split()[-1])
+    try:
+	    with open("last_alignments/{}.frag_len_est".format(wildcard)) as f:
+	    	for line in f:
+	    		if line.startswith("# estimated mean distance"):
+	    			return(line.rstrip().split()[-1])
+    except FileNotFoundError:
+    	return(80)
 
 def getSTD(wildcard):
-    with open("last_alignments/{}.frag_len_est".format(wildcard)) as f:
-        for line in f:
-            if line.startswith("# estimated standard deviation of distance"):
-            	return(line.rstrip().split()[-1])
-
+    try:
+    	with open("last_alignments/{}.frag_len_est".format(wildcard)) as f:
+    		for line in f:
+    			if line.startswith("# estimated standard deviation of distance"):
+		    		return(line.rstrip().split()[-1])
+    except FileNotFoundError:
+    	return(8)
 
 rule all:
     input:
@@ -41,12 +47,29 @@ rule last_db:
     shell:
        "lastdb -p {params.index_basename} {input.reference}"
        #"lastdb {params.index_basename} {input.reference}"
-       
+
+rule last_scoring:
+    input:
+    	reference_flag = "last_index/index.done",
+	query = config["samples"][list(config["samples"].keys())[0]][0],
+    params:
+        last_index_basename="{0}/last_index/index".format(config["out_dir"])
+    output:
+    	"last_sample/scoring_scheme"
+    conda:
+    	"env/lastxpy.yaml"
+    shell:
+    	"""
+    	head -n 400000 {input.query} > last_sample/sample_1.sample.fa
+    	python {trans_6frame} last_sample/sample_1.sample.fa  last_sample/translated.sample_1.sample.fa
+    	last-train --revsym --matsym --gapsym --sample-number=600000 -S0 {params.last_index_basename} last_sample/translated.sample_1.sample.fa> {output}
+	"""
 rule last_frag_stat_est:
     input:
         reference_flag = "last_index/index.done",
         reads1 = get_read1,
-        reads2 = get_read2
+        reads2 = get_read2,
+        scoring = "last_sample/scoring_scheme",
     params:
         last_index_basename="{0}/last_index/index".format(config["out_dir"])
     output :
@@ -59,7 +82,7 @@ rule last_frag_stat_est:
         mkfifo last_alignments/{wildcards.sample_id}_2
         gzip -cdf {input.reads1} | head -n 400000 > last_alignments/{wildcards.sample_id}_1 &
         gzip -cdf {input.reads2} | head -n 400000 > last_alignments/{wildcards.sample_id}_2 &
-        {fastq_to_fasta_interleave} last_alignments/{wildcards.sample_id}_1 last_alignments/{wildcards.sample_id}_2 | lastal -i1 -p BL62 -F15 {params.last_index_basename} | last-pair-probs -e > {output.frag_len_est}
+        {fastq_to_fasta_interleave} last_alignments/{wildcards.sample_id}_1 last_alignments/{wildcards.sample_id}_2 | lastal -i1 -p {input.scoring} -F15 {params.last_index_basename} | last-pair-probs -e > {output.frag_len_est}
         rm last_alignments/{wildcards.sample_id}_1 last_alignments/{wildcards.sample_id}_2
         """
 
@@ -69,6 +92,7 @@ rule align_last:
         reads1 = get_read1,
         reads2 = get_read2,
         frag_len_est="last_alignments/{sample_id}.frag_len_est",
+        scoring = "last_sample/scoring_scheme",
     params:
         last_index_basename="{0}/last_index/index".format(config["out_dir"]),
         mean = getMean,
@@ -79,7 +103,7 @@ rule align_last:
     conda:
     	"env/last.yaml"
     shell:
-        "{fastq_to_fasta_interleave}"+" {input.reads1} {input.reads2} | lastal -i1 -p BL62 -F15 {params.last_index_basename} |"
+        "{fastq_to_fasta_interleave}"+" {input.reads1} {input.reads2} | lastal -i1 -p {input.scoring} -F15 {params.last_index_basename} |"
         "last-pair-probs -f {params.mean} -s {params.std} -m 0.95 |"
         "maf-convert tab > {output}"
 
