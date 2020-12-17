@@ -1,5 +1,3 @@
-from pytools.persistent_dict import PersistentDict
-storage = PersistentDict("mystorage")
 configfile: "config_file.LAST.sprot.rep5.yaml"
 workdir: config["out_dir"]
 
