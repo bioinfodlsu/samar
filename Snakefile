@@ -12,21 +12,21 @@ def get_read2(wildcards):
     return config["samples"][wildcards.sample_id][1]
     
 def getMean(wildcard):
-    try:
+    if(path.exists("last_alignments/{}.frag_len_est".format(wildcard)))::
 	    with open("last_alignments/{}.frag_len_est".format(wildcard)) as f:
 	    	for line in f:
 	    		if line.startswith("# estimated mean distance"):
 	    			return(line.rstrip().split()[-1])
-    except FileNotFoundError:
+    else:
     	return(80)
 
 def getSTD(wildcard):
-    try:
+    if(path.exists("last_alignments/{}.frag_len_est".format(wildcard)))::
     	with open("last_alignments/{}.frag_len_est".format(wildcard)) as f:
     		for line in f:
     			if line.startswith("# estimated standard deviation of distance"):
 		    		return(line.rstrip().split()[-1])
-    except FileNotFoundError:
+    else:
     	return(8)
 
 rule all:
