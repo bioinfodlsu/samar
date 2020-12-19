@@ -1,3 +1,4 @@
+from os import path
 configfile: "config_file.LAST.sprot.rep5.yaml"
 workdir: config["out_dir"]
 
@@ -12,7 +13,7 @@ def get_read2(wildcards):
     return config["samples"][wildcards.sample_id][1]
     
 def getMean(wildcard):
-    if(path.exists("last_alignments/{}.frag_len_est".format(wildcard)))::
+    if(path.exists("last_alignments/{}.frag_len_est".format(wildcard))):
 	    with open("last_alignments/{}.frag_len_est".format(wildcard)) as f:
 	    	for line in f:
 	    		if line.startswith("# estimated mean distance"):
@@ -21,7 +22,7 @@ def getMean(wildcard):
     	return(80)
 
 def getSTD(wildcard):
-    if(path.exists("last_alignments/{}.frag_len_est".format(wildcard)))::
+    if(path.exists("last_alignments/{}.frag_len_est".format(wildcard))):
     	with open("last_alignments/{}.frag_len_est".format(wildcard)) as f:
     		for line in f:
     			if line.startswith("# estimated standard deviation of distance"):
@@ -85,7 +86,7 @@ rule last_frag_stat_est:
         {fastq_to_fasta_interleave} last_alignments/{wildcards.sample_id}_1 last_alignments/{wildcards.sample_id}_2 | lastal -i1 -p {input.scoring} -F15 {params.last_index_basename} | last-pair-probs -e > {output.frag_len_est}
         rm last_alignments/{wildcards.sample_id}_1 last_alignments/{wildcards.sample_id}_2
         """
-
+	
 rule align_last:
     input:
         reference_flag = "last_index/index.done",
@@ -97,16 +98,16 @@ rule align_last:
         last_index_basename="{0}/last_index/index".format(config["out_dir"]),
         mean = getMean,
         std = getSTD,
-
+    threads: workflow.cores/len(config["samples"])
     output:
         "last_alignments/{sample_id}.tab"
     conda:
-    	"env/last.yaml"
+    	"env/lastal.yaml"
     shell:
-        "{fastq_to_fasta_interleave}"+" {input.reads1} {input.reads2} | lastal -i1 -p {input.scoring} -F15 {params.last_index_basename} |"
-        "last-pair-probs -f {params.mean} -s {params.std} -m 0.95 |"
+        "{fastq_to_fasta_interleave} {input.reads1} {input.reads2} | "
+        "parallel --gnu --pipe -L4 -j {threads} 'lastal -i1 -p {input.scoring} -F20 {params.last_index_basename}' |"
+        "last-pair-probs -f {params.mean} -s {params.std} -m 0.95 -d 0.1 |"
         "maf-convert tab > {output}"
-
 rule count_last:
     input:
         alignments = "last_alignments/{sample_id}.tab",
