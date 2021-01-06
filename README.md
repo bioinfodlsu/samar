@@ -1,5 +1,5 @@
-## Installation
-# Install Conda 
-# Install Snakemake
+# Installation
+## Install Conda 
+## Install Snakemake
 
-## Usage
+# Usage
