@@ -1,6 +1,0 @@
-channels:
-    - conda-forge
-    - bioconda
-dependencies:
-    - last = 1060
-    - parallel = 20150922
