@@ -11,3 +11,13 @@ samples:
     [<path-to-file>/data/sample_03_1.fasta, <path-to-file>/data/sample_03_2.fasta]
   sample_4:
     [<path-to-file>/data/sample_04_1.fasta, <path-to-file>/data/sample_04_2.fasta]
+factors: [treatment, sex, location]
+sample_info:
+  sample_1 : [control, f, BAT]
+  sample_2 : [control, m, BAT]
+  sample_3 : [control, f, BIC]
+  sample_4 : [treated, m, BIC]
+  sample_5 : [treated, f, CAG]
+  sample_6 : [treated, m, CAG]
+design: treatment + location
+out_dir_r: out_dir_r
