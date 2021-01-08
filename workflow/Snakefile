@@ -1,5 +1,5 @@
 from os import path
-configfile: "config_file.LAST.sprot.rep5.yaml"
+configfile: "../config/config.yaml"
 workdir: config["out_dir"]
 
 fastq_to_fasta_interleave = srcdir("scripts/fastq-to-fasta-interleave.sh")
