@@ -1,13 +1,13 @@
 out_dir:
-  <path-to-file>/workflow/output
+  output/
 reference_p:
-  <path-to-file>/data/reference.fa
+  sample_data/reference.fa
 samples:
   sample_1:
-    [<path-to-file>/data/sample_01_1.fasta, <path-to-file>/data/sample_01_2.fasta]
+    [sample_data/sample_01_1.fasta, sample_data/sample_01_2.fasta]
   sample_2:
-    [<path-to-file>/data/sample_02_1.fasta, <path-to-file>/data/sample_02_2.fasta]
+    [sample_data/sample_02_1.fasta, sample_data/sample_02_2.fasta]
   sample_3:
-    [<path-to-file>/data/sample_03_1.fasta, <path-to-file>/data/sample_03_2.fasta]
+    [sample_data/sample_03_1.fasta, sample_data/sample_03_2.fasta]
   sample_4:
-    [<path-to-file>/data/sample_04_1.fasta, <path-to-file>/data/sample_04_2.fasta]
+    [sample_data/sample_04_1.fasta, sample_data/sample_04_2.fasta]
