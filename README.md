@@ -49,9 +49,8 @@ To test snakemake installation
 $ snakemake --help
 ```
 # Usage
-## Update Config File
-A sample config file with sample data is present in the repository 
 ## Running the pipeline
+A sample config file with sample data is present in the repository
 Within the snakemake environment (for conda) or directly in the terminal (for pip)
 ```
 $ snakemake --use-conda --cores all 
