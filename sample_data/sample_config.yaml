@@ -1,0 +1,7 @@
+out_dir:
+  output/
+reference_p:
+  sample_data/reference.fa
+samples:
+  sample_1:
+    [sample_data/sample_01_1.fasta, sample_data/sample_01_2.fasta]
