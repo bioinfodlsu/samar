@@ -1,16 +1,19 @@
 from os import path
-configfile: "config/config.yaml"
+#configfile: "config/config.yaml"
 
 fastq_to_fasta_interleave = srcdir("scripts/fastq-to-fasta-interleave.sh")
 seq_count = srcdir("scripts/seq_count.py")
 trans_6frame = srcdir("scripts/translate_6frames.py")
 
+# Fix empty configs
+
+#Input functions
 def get_read1(wildcards):
-    return config["samples"][wildcards.sample_id][0]
+    return config["reads"][wildcards.sample_id][0]
 
 def get_read2(wildcards):
-    return config["samples"][wildcards.sample_id][1]
-    
+    return config["reads"][wildcards.sample_id][1]
+
 def getMean(wildcard):
     est_path = "{}/last_alignments/{}.frag_len_est".format(config["out_dir"],wildcard)
     if(path.exists(est_path)):
@@ -31,13 +34,34 @@ def getSTD(wildcard):
     else:
     	return(-1)
 
+def getScoring(wildcards):
+    if "training" in config:
+        if config["training"].lower() != "no":
+            return config["out_dir"]+"last_sample/scoring_scheme"
+        else: return "BL62"
+    else:
+        return "BL62"
+
+def get_input_align_last(wildcards):
+    input_dict = {}
+    input_dict["reference_flag"] = config["out_dir"]+"last_index/index.done"
+    input_dict["reads1"] = get_read1(wildcards)
+    input_dict["reads2"] = get_read2(wildcards)
+    #input_dict["frag_len_est"] = config["out_dir"]+"last_alignments/{sample_id}.frag_len_est"
+    if "training" in config:
+        if config["training"].lower() != "no":
+            input_dict["scoring"] = config["out_dir"]+"last_sample/scoring_scheme"
+    else:
+        input_dict["scoring"] = config["out_dir"]+"last_sample/scoring_scheme"
+    return input_dict
+# Rule declarations begin here:
 rule all:
     input:
         [
-            expand(config["out_dir"]+"last_counts/{sample_id}/{sample_id}.counts",sample_id=config["samples"].keys())
+            expand(config["out_dir"]+"last_counts/{sample_id}/{sample_id}.counts",sample_id=config["reads"].keys())
         ]
-	
-rule last_db:
+
+rule last_db: #Rule for constructing LAST index
     input:
         reference = config["reference_p"]
     output:
@@ -45,15 +69,15 @@ rule last_db:
     params:
        index_basename="{0}/last_index/index".format(config["out_dir"])
     conda:
-    	"env/last.yaml"       
+    	"env/last.yaml"
     shell:
        "lastdb -p {params.index_basename} {input.reference}"
        #"lastdb {params.index_basename} {input.reference}"
 
-rule last_scoring:
+rule last_scoring: #Rule for training score parameters
     input:
     	reference_flag = config["out_dir"]+"last_index/index.done",
-	query = config["samples"][list(config["samples"].keys())[0]][0],
+	    query = config["reads"][list(config["reads"].keys())[0]][0],
     params:
         last_index_basename="{0}/last_index/index".format(config["out_dir"]),
         last_sample1="{0}/last_sample/sample_1.sample.fa".format(config["out_dir"]),
@@ -67,16 +91,19 @@ rule last_scoring:
     	head -n 400000 {input.query} > {params.last_sample1}
     	python {trans_6frame} {params.last_sample1}  {params.last_trans_sample1}
     	last-train --revsym --matsym --gapsym --sample-number=600000 -S0 {params.last_index_basename} {params.last_trans_sample1}> {output}
-	"""
-rule last_frag_stat_est:
+	    """
+
+rule last_frag_stat_est: #Rule for estimating length distribution of paired-end reads
     input:
-        reference_flag = config["out_dir"]+"last_index/index.done",
-        reads1 = get_read1,
-        reads2 = get_read2,
-        scoring = config["out_dir"]+"last_sample/scoring_scheme",
+        unpack(get_input_align_last)
+        #reference_flag = config["out_dir"]+"last_index/index.done",
+        #reads1 = get_read1,
+        #reads2 = get_read2,
+        #scoring = config["out_dir"]+"last_sample/scoring_scheme",
     params:
-        last_index_basename="{0}/last_index/index".format(config["out_dir"]),
-        last_al = "{0}/last_alignments".format(config["out_dir"]),
+        last_index_basename= config["out_dir"]+"/last_index/index",
+        last_al = config["out_dir"]+"/last_alignments",
+        scoring = getScoring
     output :
         frag_len_est=config["out_dir"]+"last_alignments/{sample_id}.frag_len_est",
     conda:
@@ -87,32 +114,38 @@ rule last_frag_stat_est:
         mkfifo {params.last_al}/{wildcards.sample_id}_2
         gzip -cdf {input.reads1} | head -n 400000 > {params.last_al}/{wildcards.sample_id}_1 &
         gzip -cdf {input.reads2} | head -n 400000 > {params.last_al}/{wildcards.sample_id}_2 &
-        {fastq_to_fasta_interleave} {params.last_al}/{wildcards.sample_id}_1 {params.last_al}/{wildcards.sample_id}_2 | lastal -i1 -p {input.scoring} -F15 {params.last_index_basename} | last-pair-probs -e > {output.frag_len_est}
+        {fastq_to_fasta_interleave} {params.last_al}/{wildcards.sample_id}_1 {params.last_al}/{wildcards.sample_id}_2 | lastal -i1 -p {params.scoring} -F15 {params.last_index_basename} | last-pair-probs -e > {output.frag_len_est}
         rm {params.last_al}/{wildcards.sample_id}_1 {params.last_al}/{wildcards.sample_id}_2
         """
-	
-rule align_last:
+
+rule align_last: #Rule for aligning RNA-seq reads to protein database
     input:
-        reference_flag = config["out_dir"]+"last_index/index.done",
-        reads1 = get_read1,
-        reads2 = get_read2,
-        frag_len_est= config["out_dir"]+"last_alignments/{sample_id}.frag_len_est",
-        scoring = config["out_dir"]+"last_sample/scoring_scheme",
+        unpack(get_input_align_last),
+        frag_len_est = config["out_dir"]+"last_alignments/{sample_id}.frag_len_est"
+    #    frag_len_est = config["out_dir"]+"last_alignments/{sample_id}.frag_len_est"
+    #    reference_flag = config["out_dir"]+"last_index/index.done",
+    #    reads1 = get_read1,
+    #    reads2 = get_read2,
+    #    frag_len_est= config["out_dir"]+"last_alignments/{sample_id}.frag_len_est",
+    #    scoring = config["out_dir"]+"last_sample/scoring_scheme",
     params:
         last_index_basename="{0}/last_index/index".format(config["out_dir"]),
         mean = getMean,
         std = getSTD,
-    threads: workflow.cores/len(config["samples"])
+        #scoring = config["out_dir"]+"last_sample/scoring_scheme"
+        scoring = getScoring
+    threads: workflow.cores/len(config["reads"])
     output:
         config["out_dir"]+"last_alignments/{sample_id}.tab"
     conda:
     	"env/lastal.yaml"
     shell:
         "{fastq_to_fasta_interleave} {input.reads1} {input.reads2} | "
-        "parallel --gnu --pipe -L4 -j {threads} 'lastal -i1 -p {input.scoring} -F20 {params.last_index_basename}' |"
+        "parallel --gnu --pipe -L4 -j {threads} 'lastal -i1 -p {params.scoring} -F20 {params.last_index_basename}' |"
         "last-pair-probs -f {params.mean} -s {params.std} -m 0.95 -d 0.1 |"
         "maf-convert tab > {output}"
-rule count_last:
+
+rule count_last: #Rule for getting count data from alignments
     input:
         alignments = config["out_dir"]+"last_alignments/{sample_id}.tab",
         reference = config["reference_p"]
@@ -125,4 +158,3 @@ rule count_last:
     	"env/counting.yaml"
     shell:
         "python {seq_count} {input.alignments} {output} --frag_len_mean {params.mean} --frag_len_std {params.std} --reference {input.reference}"
-        

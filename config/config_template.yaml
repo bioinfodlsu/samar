@@ -1,18 +1,20 @@
-## Template config file. 
-## Here you can specify the paths to the input and output, and other additional parameters.
-## Arguments are specified in a key:value format, do NOT change the key names.
+# Template config file. 
+# Here you can specify the paths to the input and output, and other additional parameters.
+# Arguments are specified in a key:value format, do NOT change the key names.
 
 
-## Input data
+#####################
+# Input and output 
+#####################
 
 # It is recommended to provide absolute paths, i.e. beginning with root (/). 
-# For relative paths, the root directory is the location from which snakemake is called.
+# Else, paths are considered to be relative with the location from which snakemake is called as root.
 
 # Reference protein database. 
 reference_p: /path/to/reference/proteome 
   
 # Fastq files containing paired RNA-seq reads.
-samples: 
+reads: 
   sample_1: #Sample 1. Provide the paired files as a list of 2 items.
     [ /path/to/sample1_L.fastq, /path/to/smaple1_R.fastq ] # Do not remove the [ and ]. Separate the file names by a comma.
   sample_2: #Sample 2.
@@ -20,6 +22,14 @@ samples:
   #add more samples as needed
   
 # Output folder 
-# It is recommended to provide absolute paths, i.e. beginning with root (/). 
-# For relative paths, the root directory is the location from which snakemake is called.
 out_dir: /path/to/output/folder
+
+
+#####################
+# Training scoring scheme
+#####################
+
+##Uncomment below to disable scoring scheme training by last-train
+#training : "no"   
+
+
