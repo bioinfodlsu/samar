@@ -11,43 +11,26 @@
 # Else, paths are considered to be relative with the location from which snakemake is called as root.
 
 # Reference protein database.
-reference_p: test_data/ref.fa
+reference_p: test_data2/ref.fa
 
 # Fastq files containing paired RNA-seq reads.
 reads:
   sample_1: #Sample 1. Provide the paired files as a list of 2 items.
-    [ test_data/reads_01_1.fastq, test_data/reads_01_2.fastq ] # Do not remove the [ and ]. Separate the file names by a comma.
+    [ test_data2/reads_1_1.fastq, test_data2/reads_1_2.fastq ] # Do not remove the [ and ]. Separate the file names by a comma.
   sample_2: #Sample 2.
-    [ test_data/reads_02_1.fastq, test_data/reads_02_2.fastq]
+    [ test_data2/reads_2_1.fastq, test_data2/reads_2_2.fastq]
   sample_3: #Sample 3.
-    [ test_data/reads_03_1.fastq, test_data/reads_03_2.fastq]
+    [ test_data2/reads_3_1.fastq, test_data2/reads_3_2.fastq]
   sample_4: #Sample 4.
-    [ test_data/reads_04_1.fastq, test_data/reads_04_2.fastq]
+    [ test_data2/reads_4_1.fastq, test_data2/reads_4_2.fastq]
   sample_5: #Sample 5.
-    [ test_data/reads_05_1.fastq, test_data/reads_05_2.fastq]
+    [ test_data2/reads_5_1.fastq, test_data2/reads_5_2.fastq]
   sample_6: #Sample 6.
-    [ test_data/reads_06_1.fastq, test_data/reads_06_2.fastq]
+    [ test_data2/reads_6_1.fastq, test_data2/reads_6_2.fastq]
 
 # Output folder
-out_dir: test_output/
+out_dir: test2_output/
 
-#####################
-# Differential gene expression analysis with DESeq2
-#####################
-
-# Sample information
-factors: [Group]
-sample_info:
-  sample_1 : [control]
-  sample_2 : [control]
-  sample_3 : [control]
-  sample_4 : [treated]
-  sample_5 : [treated]
-  sample_6 : [treated]
-design: Group
-
-# Output folder  
-out_dir_r: results/r_test_output
 
 #####################
 # Training scoring scheme
