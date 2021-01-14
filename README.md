@@ -3,7 +3,7 @@ This pipeline allows performing rapid differential expression (DE) analysis in n
 
 For non-model organisms, the conventional strategy for DE analysis has been to first construct a de-novo transcriptome assembly and annotate it against a high-confidence protein database -- the assembly serving as a reference for read mapping and the annotation allowing for functional analysis of genes found to have DE. 
 
-This pipeline uses [LAST](www.last.cbrc.jp) to directly RNA-seq reads to the high-confidence proteome that would have been otherwise used for annotation, and generates counts that can be fed to a counts-based differential expression analysis tool (e.g. [DESeq2](https://bioconductor.org/packages/release/bioc/html/DESeq2.html)).
+This pipeline uses [LAST](http://www.last.cbrc.jp) to directly RNA-seq reads to the high-confidence proteome that would have been otherwise used for annotation, and generates counts that can be fed to a counts-based differential expression analysis tool (e.g. [DESeq2](https://bioconductor.org/packages/release/bioc/html/DESeq2.html)).
 # 1. Installation
 This pipeline requires the package manager **Conda** and the workflow management system **Snakemake**.
 All other dependencies are handled automatically by Snakemake.
@@ -49,7 +49,7 @@ $ snakemake --configfile sample_data/config.yaml --use-conda --cores all
 This might take some time -- especially if it is the first ever run, Snakemake needs to install all dependencies prior to running the actual computations. This is a good time for a short break.
 
 # 2.3 Ouput
-The count data required for differential gene expression analysis is inside the *last_counts* folder inside the output folder (if not specified in the config file, the default output location is the root directory of the repository). To adhere to conventional data formats, the count file contains five columns, of which the last column (NumReads) should be used for differential expression analysis.
+The count data required for differential gene expression analysis is inside the *counts* folder inside the output folder (if not specified in the config file, the default output location is the root directory of the repository). To adhere to conventional data formats, the count file contains five columns, of which the last column (NumReads) should be used for differential expression analysis.
 
 
 
