@@ -3,7 +3,7 @@ This pipeline allows performing rapid differential expression (DE) analysis in n
 
 For non-model organisms, the conventional strategy for DE analysis has been to first construct a de-novo transcriptome assembly and annotate it against a high-confidence protein database -- the assembly serving as a reference for read mapping and the annotation allowing for functional analysis of genes found to have DE. 
 
-This pipeline uses [LAST](http://www.last.cbrc.jp) to directly RNA-seq reads to the high-confidence proteome that would have been otherwise used for annotation, and generates counts that can be fed to a counts-based differential expression analysis tool (e.g. [DESeq2](https://bioconductor.org/packages/release/bioc/html/DESeq2.html)).
+This pipeline uses [LAST](http://last.cbrc.jp) to directly RNA-seq reads to the high-confidence proteome that would have been otherwise used for annotation, and generates counts that can be fed to a counts-based differential expression analysis tool (e.g. [DESeq2](https://bioconductor.org/packages/release/bioc/html/DESeq2.html)).
 # 1. Installation
 This pipeline requires the package manager **Conda** and the workflow management system **Snakemake**.
 All other dependencies are handled automatically by Snakemake.
