@@ -31,6 +31,23 @@ reads:
 # Output folder
 out_dir: test_output/
 
+#####################
+# Differential gene expression analysis with DESeq2
+#####################
+
+# Sample information
+factors: [Group]
+sample_info:
+  sample_1 : [control]
+  sample_2 : [control]
+  sample_3 : [control]
+  sample_4 : [treated]
+  sample_5 : [treated]
+  sample_6 : [treated]
+design: Group
+
+# Output folder  
+out_dir_r: results/r_test_output
 
 #####################
 # Training scoring scheme
