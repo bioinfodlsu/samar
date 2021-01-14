@@ -3,7 +3,6 @@ from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
 import argparse
 
-#with open("200K.fasta","r") as fin,open("200K_translated.fasta","w") as fout:
 def checklen(seq):
     if (len(seq)%3 == 1):
     	return seq + "NN"
@@ -14,16 +13,16 @@ def checklen(seq):
 
 
 parser = argparse.ArgumentParser()
-parser.add_argument('input_file',help="alignments in tab format")
-parser.add_argument('output_file',help="output file containing counts")
+parser.add_argument('input_file',help="fastq file containing reads")
+parser.add_argument('output_file',help="output file containing translated sequences in all six frames")
 args = parser.parse_args()
 with open(args.input_file,"r") as fin,open(args.output_file,"w") as fout:
 
-    for seq_record in SeqIO.parse(fin,"fasta"):
+    for seq_record in SeqIO.parse(fin,"fastq"):
         header = seq_record.id
         source = seq_record.seq
         source_rc = source.reverse_complement()
-	
+
         translated_records = []
         translated_records.append(SeqRecord(seq=checklen(source).translate(), id = header+"_1",description=header+"_1"))
         translated_records.append(SeqRecord(seq=checklen(source[1:]).translate(), id = header+"_2",description=header+"_2"))

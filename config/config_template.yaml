@@ -29,7 +29,7 @@ out_dir: /path/to/output/folder
 # Training scoring scheme
 #####################
 
-##Uncomment below to disable scoring scheme training by last-train
+##Uncomment/comment below to enable/disable scoring scheme training by last-train
 #training : "no"   
 
 
