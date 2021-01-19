@@ -47,7 +47,7 @@ if(sys.nframe() == 0L) {  # mimics __name__ == "main" of python
   
   in_dir <- opt$in_dir
   out_dir <- opt$out_dir # TODO: ask if kyle creates this or I create this
-  sample_info <- rjson::fromJSON(opt$sample_info)[[1]]
+  sample_info <- rjson::fromJSON(opt$sample_info)
   factors <- rjson::fromJSON(opt$factors)
   design <- as.formula(paste0("~", opt$design))
   
