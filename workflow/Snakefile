@@ -1,9 +1,10 @@
 from os import path
-#configfile: "config/config.yaml"
+configfile: "testdata/config_test.yaml"
 
 fastq_to_fasta_interleave = srcdir("scripts/fastq-to-fasta-interleave.sh")
 seq_count = srcdir("scripts/seq_count.py")
 trans_6frame = srcdir("scripts/translate_6frames.py")
+last_deseq2 = srcdir("scripts/last2deseq.R")
 
 # Fix empty configs
 
@@ -55,11 +56,27 @@ def get_input_align_last(wildcards):
         input_dict["scoring"] = config["out_dir"]+"score_sample/scoring_scheme"
     return input_dict
 # Rule declarations begin here:
-rule all:
+rule deseq: #Rule for performing Differential Expression Analysis
     input:
         [
             expand(config["out_dir"]+"counts/{sample_id}/{sample_id}.counts",sample_id=config["reads"].keys())
         ]
+    output:
+    	config["out_dir"]+'analysis/DE count summary.txt',
+    	config["out_dir"]+'analysis/DESeq2 fit.csv',
+    	config["out_dir"]+'analysis/DESeq2 fit.RDS',
+    	config["out_dir"]+'analysis/Test result - Group_treated_vs_control.csv',
+    params:
+    	count_dir="{0}/counts".format(config["out_dir"]),
+    	outdir = "{0}/analysis".format(config["out_dir"]),
+    	sample_info = str(config["sample_info"]).replace("'","\""),
+    	design = str(config["design"]),
+    	factors = str(config["factors"]).replace("'","\""),
+    conda:
+    	"env/r.yaml"
+    shell:
+    	"Rscript {last_deseq2} --in_dir '{params.count_dir}' --factors '{params.factors}'"
+    	" --design '{params.design}' --sample_info '{params.sample_info}' --out_dir '{params.outdir}'"
 
 rule last_db: #Rule for constructing LAST index
     input:
