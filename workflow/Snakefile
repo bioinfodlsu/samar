@@ -1,5 +1,5 @@
 from os import path
-configfile: "testdata/config_test.yaml"
+#configfile: "testdata/config_test.yaml"
 
 fastq_to_fasta_interleave = srcdir("scripts/fastq-to-fasta-interleave.sh")
 seq_count = srcdir("scripts/seq_count.py")
@@ -62,10 +62,10 @@ rule deseq: #Rule for performing Differential Expression Analysis
             expand(config["out_dir"]+"counts/{sample_id}/{sample_id}.counts",sample_id=config["reads"].keys())
         ]
     output:
-    	config["out_dir"]+'analysis/DE count summary.txt',
-    	config["out_dir"]+'analysis/DESeq2 fit.csv',
-    	config["out_dir"]+'analysis/DESeq2 fit.RDS',
-    	config["out_dir"]+'analysis/Test result - Group_treated_vs_control.csv',
+    	config["out_dir"]+'analysis/DE_count_summary.txt',
+    	config["out_dir"]+'analysis/DESeq2_fit.csv',
+    	config["out_dir"]+'analysis/DESeq2_fit.RDS',
+    	config["out_dir"]+'analysis/Test_result-Group_treated_vs_control.csv',
     params:
     	count_dir="{0}/counts".format(config["out_dir"]),
     	outdir = "{0}/analysis".format(config["out_dir"]),
