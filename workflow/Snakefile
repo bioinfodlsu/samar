@@ -62,10 +62,7 @@ rule deseq: #Rule for performing Differential Expression Analysis
             expand(config["out_dir"]+"counts/{sample_id}/{sample_id}.counts",sample_id=config["reads"].keys())
         ]
     output:
-    	config["out_dir"]+'DEanalysis/DE_count_summary.txt',
-    	config["out_dir"]+'DEanalysis/DESeq2_fit.csv',
-    	config["out_dir"]+'DEanalysis/DESeq2_fit.RDS',
-    	config["out_dir"]+'DEanalysis/Test_result-Group_treated_vs_control.csv',
+    	directory(config["out_dir"]+'DEanalysis/'),
     params:
     	count_dir="{0}/counts".format(config["out_dir"]),
     	outdir = "{0}/DEanalysis".format(config["out_dir"]),
