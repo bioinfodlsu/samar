@@ -42,7 +42,7 @@ As an example, suppose we wish to compute counts for the sets of paired-end read
 The folder also contains a config file *config_test.yaml* file specifying the paths to the input data, and where the output should be stored.
 To run the pipeline, from the pipeline root directory and with the snakemake conda environment activated:
 ```
-$ snakemake --configfile test_data/config_test.yaml --use-conda --cores all 
+$ snakemake --configfile testdata/config_test.yaml --use-conda --cores all 
 ```
 This might take some time since Snakemake needs to install all dependencies prior to running the actual computations.
 # 2.3 Ouput
