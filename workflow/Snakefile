@@ -55,6 +55,27 @@ def get_input_align_last(wildcards):
     else:
         input_dict["scoring"] = config["out_dir"]+"score_sample/scoring_scheme"
     return input_dict
+    
+deseqOutput = [config["out_dir"]+'DEanalysis/DE_count_summary.txt',
+	    	config["out_dir"]+'DEanalysis/DESeq2_fit.csv',
+	    	config["out_dir"]+'DEanalysis/DESeq2_fit.RDS'
+	    	]
+
+dynamicFiles = config["out_dir"]+'DEanalysis/Test_result-{}_{}_vs_{}.csv'
+
+levels = list(dict(config["sample_info"]).values())
+factorsxlevels = {}
+
+for n,factor in enumerate(config["factors"]):
+    factorsxlevels[factor] = []
+    for level in levels:
+    	if(level[n] not in factorsxlevels[factor]):
+   	    factorsxlevels[factor].append(level[n])
+   	        
+for factor in factorsxlevels.keys():
+    for x in range(1,len(factorsxlevels[factor])):
+        deseqOutput.append(dynamicFiles.format(factor,factorsxlevels[factor][x],factorsxlevels[factor][0]))    
+    
 # Rule declarations begin here:
 rule deseq: #Rule for performing Differential Expression Analysis
     input:
@@ -62,7 +83,7 @@ rule deseq: #Rule for performing Differential Expression Analysis
             expand(config["out_dir"]+"counts/{sample_id}/{sample_id}.counts",sample_id=config["reads"].keys())
         ]
     output:
-    	directory(config["out_dir"]+'DEanalysis/'),
+    	deseqOutput,
     params:
     	count_dir="{0}/counts".format(config["out_dir"]),
     	outdir = "{0}/DEanalysis".format(config["out_dir"]),
