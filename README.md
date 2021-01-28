@@ -4,6 +4,7 @@ This pipeline allows performing rapid differential expression (DE) analysis in n
 For non-model organisms, the conventional strategy for DE analysis has been to begin by constructing a de-novo transcriptome assembly and annotating it against a high-confidence protein database -- the assembly serving as a reference for read mapping and the annotation allowing for functional analysis of genes found to have DE. 
 
 This pipeline takes in paired-end RNA-seq reads and a reference proteome (which would have been used for annotation in the assembly-based approach) and does the following:
+
 1. Uses [LAST](http://last.cbrc.jp) to learn the alignment scoring parameters suitable for the input data, and to estimate the paired-end fragment size distribution
 2. Uses [LAST](http://last.cbrc.jp) to directly align RNA-seq reads to the high-confidence proteome that would have been otherwise used for annotation, and generates counts
 3. Estimates the counts of reads aligning to each protein entry, using a rescue strategy for multi-mapping reads.
