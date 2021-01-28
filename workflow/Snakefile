@@ -1,9 +1,10 @@
 from os import path
-#configfile: "config/config.yaml"
+#configfile: "testdata/config_test.yaml"
 
 fastq_to_fasta_interleave = srcdir("scripts/fastq-to-fasta-interleave.sh")
 seq_count = srcdir("scripts/seq_count.py")
 trans_6frame = srcdir("scripts/translate_6frames.py")
+last_deseq2 = srcdir("scripts/last2deseq.R")
 
 # Fix empty configs
 
@@ -54,12 +55,46 @@ def get_input_align_last(wildcards):
     else:
         input_dict["scoring"] = config["out_dir"]+"score_sample/scoring_scheme"
     return input_dict
+    
+deseqOutput = [config["out_dir"]+'DEanalysis/DE_count_summary.txt',
+	    	config["out_dir"]+'DEanalysis/DESeq2_fit.csv',
+	    	config["out_dir"]+'DEanalysis/DESeq2_fit.RDS'
+	    	]
+
+dynamicFiles = config["out_dir"]+'DEanalysis/Test_result-{}_{}_vs_{}.csv'
+
+levels = list(dict(config["sample_info"]).values())
+factorsxlevels = {}
+
+for n,factor in enumerate(config["factors"]):
+    factorsxlevels[factor] = []
+    for level in levels:
+    	if(level[n] not in factorsxlevels[factor]):
+   	    factorsxlevels[factor].append(level[n])
+   	        
+for factor in factorsxlevels.keys():
+    for x in range(1,len(factorsxlevels[factor])):
+        deseqOutput.append(dynamicFiles.format(factor,factorsxlevels[factor][x],factorsxlevels[factor][0]))    
+    
 # Rule declarations begin here:
-rule all:
+rule deseq: #Rule for performing Differential Expression Analysis
     input:
         [
             expand(config["out_dir"]+"counts/{sample_id}/{sample_id}.counts",sample_id=config["reads"].keys())
         ]
+    output:
+    	deseqOutput,
+    params:
+    	count_dir="{0}/counts".format(config["out_dir"]),
+    	outdir = "{0}/DEanalysis".format(config["out_dir"]),
+    	sample_info = str(dict(config["sample_info"])).replace("'","\""),
+    	design = str(config["design"]),
+    	factors = str(config["factors"]).replace("'","\""),
+    conda:
+    	"env/r.yaml"
+    shell:
+    	"Rscript {last_deseq2} --in_dir '{params.count_dir}' --factors '{params.factors}'"
+    	" --design '{params.design}' --sample_info '{params.sample_info}' --out_dir '{params.outdir}'"
 
 rule last_db: #Rule for constructing LAST index
     input:

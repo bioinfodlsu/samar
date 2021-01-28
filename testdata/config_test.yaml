@@ -8,7 +8,7 @@
 #####################
 
 # It is recommended to provide absolute paths, i.e. beginning with root (/).
-# Else, paths are considered to be relative with the location from which snakemake is called as root.
+# Else, paths are considered to be relative to the location from which snakemake is called.
 
 # Reference protein database.
 reference_p: testdata/ref.fa
@@ -37,4 +37,20 @@ out_dir: test_output/
 #####################
 
 ##Uncomment below to disable scoring scheme training by last-train
-#training : "no"
+training : "no"
+
+
+#####################
+# Differential gene expression analysis with DESeq2
+#####################
+
+# Sample information
+factors: [Treatment]
+sample_info:
+  sample_1 : [control]
+  sample_2 : [control]
+  sample_3 : [control]
+  sample_4 : [treated]
+  sample_5 : [treated]
+  sample_6 : [treated]
+design: Treatment
