@@ -54,7 +54,12 @@ $ snakemake --configfile testdata/config_test.yaml --use-conda --cores all
 ```
 This might take some time since for the first run, Snakemake needs to install all dependencies prior to running the actual computations.
 # 2.3 Ouput
-The results of the differential expression analysis can be found inside the *DEanalysis* folder. 
+The results of the differential expression analysis can be found inside the *DEanalysis* folder. The contents of this folder:
+
++ Count of up- and downregulated genes (DE count summary.txt)
++ Significance testing of all genes (Test result - Group_treated_vs_control.csv)
++ Estimated coefficients based on the experimental design (DESeq2 fit.csv)
++ Loadable R data for more advanced DE analysis (DESeq2 fit.RDS)
 
 Other intermediate output data can also be found in the output folder.  For example, the count data can be found inside the *counts* folder, in case you wish to perform your own differential gene expression analysis.
 The count file contains five columns, of which the last column (NumReads) should be used for differential expression analysis. 
