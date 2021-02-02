@@ -98,7 +98,6 @@ if(sys.nframe() == 0L) {  # mimics __name__ == "main" of python
   # ------- Output ------- # 
   dir.create(out_dir, showWarnings = FALSE, recursive = TRUE)
   saveRDS(deseq, file = file.path(out_dir, "DESeq2_fit.RDS"))
-  write.csv(rowData(deseq), file.path(out_dir, "DESeq2_fit.csv"))
   sink(file.path(out_dir, "DE_count_summary.txt"))
   for(r in resultsNames(deseq)[-1]){
     res <- DESeq2::results(deseq, name = r)
