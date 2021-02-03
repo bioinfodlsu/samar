@@ -54,17 +54,15 @@ $ snakemake --configfile testdata/config_test.yaml --use-conda --cores all
 ```
 This might take some time since for the first run, Snakemake needs to install all dependencies prior to running the actual computations.
 # 2.3 Ouput
-The results of the differential expression analysis can be found inside the *DEanalysis* folder. The contents of this folder are:
+The results of the differential expression analysis can be found inside the *DEanalysis* folder. In the previous example, the test data was designed to compare 6 genes between treated vs control groups, and so running the DE analysis produces the following outputs:
 
-+ Count of up- and downregulated *genes* for all tests (DE count summary.txt)
-+ Significance testing for all genes (Test result - Group_treated_vs_control.csv)
-    + contains log2 fold changes, p values and adjusted p values
-+ All fitted coefficients based on the experimental design (DESeq2 fit.csv)
-+ Loadable R data for more advanced DE analysis (DESeq2 fit.RDS)
+- Count of up- and downregulated *genes* (DE_count_summary.txt)
+- Table of significance testing per gene (Test_result_-_Group_treated_vs_control.csv)
+    - contains log2 fold change, p value, and adjusted p value
+- Loadable R data for more advanced DE analysis (DESeq2_fit.RDS)
 
-By testing the only coefficient in the test data, named "Group_treated_vs_control", the first file above should show that only 1 "gene" is differentially expressed. Furthermore, the second file expounds the former information and reveals that *UPI0000000AE2* is upregulated (log2FoldChange > 0 and padj < 0.01). Depending on the experimental design, the number of coefficients will vary, and thus, the number of significance testing outputs.
+Examining the first file reveals that only 1 *gene* is differentially expressed; while the second file allows the identification of this *gene* to be *UPI0000000AE2* which is upregulated (*log2FoldChange* > 0 and *padj* < 0.01).
 
-Other intermediate output data can also be found in the output folder.  For example, the count data can be found inside the *counts* folder, in case you wish to perform your own differential gene expression analysis.
-The count file contains five columns, of which the last column (NumReads) should be used for differential expression analysis. 
+In general, the number of significance testing done depends on these fields in the config file: 1.) declared *factors* and unique levels in *sample_info,* and 2.) the *design,* which is a factorial model that is hypothesized to cause a difference in gene expression. Note that the first sample in *sample_info* will be the reference group, and that significance testing is only done for the difference of the other levels (or interaction of these levels) vs this reference group**.** For advanced DE analysis like testing contrasts, the DESeq2 object is available in the loadable R data to perform such functions. 
 
-
+Aside from DESeq2, in case you wish to perform your own differential gene expression analysis, the *counts* folder contains a *.counts* table for each sample, where the last column (NumReads) should be used for differential expression analysis.
