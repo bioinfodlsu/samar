@@ -36,7 +36,7 @@ out_dir: test_output/
 #####################
 
 ##Uncomment below to disable differential expression analysis by deseq2 (default: yes)
-#deanalysis : "no"
+#deseq : "no"
 
 
 #####################
