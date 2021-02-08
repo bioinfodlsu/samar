@@ -1,7 +1,18 @@
 from os import path
+import itertools 
 #configfile: "testdata/config_test.yaml"
 
-fastq_to_fasta_interleave = srcdir("scripts/fastq-to-fasta-interleave.sh")
+if "fasta" in config:
+    if config["fasta"].lower() != "no":
+    	interleave = srcdir("scripts/fasta-interleave.sh")
+    	file_type = "fasta"
+    else:
+    	interleave = srcdir("scripts/fastq-to-fasta-interleave.sh")
+    	file_type = "fastq"
+else:
+    interleave = srcdir("scripts/fastq-to-fasta-interleave.sh")
+    file_type = "fastq"
+
 seq_count = srcdir("scripts/seq_count.py")
 trans_6frame = srcdir("scripts/translate_6frames.py")
 last_deseq2 = srcdir("scripts/last2deseq.R")
@@ -72,11 +83,28 @@ for n,factor in enumerate(config["factors"]):
     	if(level[n] not in factorsxlevels[factor]):
    	    factorsxlevels[factor].append(level[n])
    	        
-for factor in factorsxlevels.keys():
+for factor in config["design"].split("+"):
     for x in range(1,len(factorsxlevels[factor])):
         deseqOutput.append(dynamicFiles.format(factor,factorsxlevels[factor][x],factorsxlevels[factor][0]))    
-    
+  
+for term in config["design"].split("+") :
+    if("*" in term):
+        interactionTerm = term.replace(" ", "").split("*")
+        for order in range(1,len(interactionTerm)):
+            for comb in list(itertools.combinations(interactionTerm, order + 1)):
+                coeff = [list(map(lambda x: i+x, factorsxlevels[i][1:])) for i in comb]
+                coeffTests = [config["out_dir"]+"DEanalysis/Test_result-" + '.'.join(i) + ".csv" for i in list(itertools.product(*coeff))]
+                deseqOutput.extend(coeffTests)
+
+all_input = deseqOutput
+if "deanalysis" in config:
+    if config["deanalysis"].lower() == "no":
+        all_input = expand(config["out_dir"]+"counts/{sample_id}/{sample_id}.counts",sample_id=config["reads"].keys())
+
 # Rule declarations begin here:
+rule all: #Initial Rule in snakemake
+    input: all_input
+
 rule deseq: #Rule for performing Differential Expression Analysis
     input:
         [
@@ -117,6 +145,7 @@ rule last_score_training: #Rule for training score parameters
         last_index_basename="{0}/last_index/index".format(config["out_dir"]),
         last_sample1="{0}/score_sample/sample_1.sample.fa".format(config["out_dir"]),
         last_trans_sample1="{0}/score_sample/translated.fasta".format(config["out_dir"]),
+        file_type=file_type,
     output:
     	config["out_dir"]+"score_sample/scoring_scheme"
     conda:
@@ -124,7 +153,7 @@ rule last_score_training: #Rule for training score parameters
     shell:
     	"""
     	head -n 400000 {input.query} > {params.last_sample1}
-    	python {trans_6frame} {params.last_sample1}  {params.last_trans_sample1}
+    	python {trans_6frame} {params.last_sample1} {params.file_type} {params.last_trans_sample1}
     	last-train --revsym --matsym --gapsym --sample-number=600000 -S0 {params.last_index_basename} {params.last_trans_sample1}> {output}
 	    """
 
@@ -149,7 +178,7 @@ rule last_frag_stat_est: #Rule for estimating length distribution of paired-end 
         mkfifo {params.last_al}/{wildcards.sample_id}_2
         gzip -cdf {input.reads1} | head -n 400000 > {params.last_al}/{wildcards.sample_id}_1 &
         gzip -cdf {input.reads2} | head -n 400000 > {params.last_al}/{wildcards.sample_id}_2 &
-        {fastq_to_fasta_interleave} {params.last_al}/{wildcards.sample_id}_1 {params.last_al}/{wildcards.sample_id}_2 | lastal -i1 -p {params.scoring} -F15 {params.last_index_basename} | last-pair-probs -e > {output.frag_len_est}
+        {interleave} {params.last_al}/{wildcards.sample_id}_1 {params.last_al}/{wildcards.sample_id}_2 | lastal -i1 -p {params.scoring} -F15 {params.last_index_basename} | last-pair-probs -e > {output.frag_len_est}
         rm {params.last_al}/{wildcards.sample_id}_1 {params.last_al}/{wildcards.sample_id}_2
         """
 
@@ -175,7 +204,7 @@ rule align_last: #Rule for aligning RNA-seq reads to protein database
     conda:
     	"env/lastal.yaml"
     shell:
-        "{fastq_to_fasta_interleave} {input.reads1} {input.reads2} | "
+        "{interleave} {input.reads1} {input.reads2} | "
         "parallel --gnu --pipe -L4 -j {threads} 'lastal -i1 -p {params.scoring} -F20 {params.last_index_basename}' |"
         "last-pair-probs -f {params.mean} -s {params.std} -m 0.95 -d 0.1 |"
         "maf-convert tab > {output}"

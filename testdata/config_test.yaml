@@ -31,6 +31,13 @@ reads:
 # Output folder
 out_dir: test_output/
 
+#####################
+# Differential Expression Analysis 
+#####################
+
+##Uncomment below to disable differential expression analysis by deseq2 (default: yes)
+#deseq : "no"
+
 
 #####################
 # Training scoring scheme
@@ -39,13 +46,19 @@ out_dir: test_output/
 ##Uncomment below to disable scoring scheme training by last-train
 training : "no"
 
+#####################
+# Input File Type 
+#####################
+
+##Uncomment below to change input file type from fastq (default) to fasta
+fasta: "yes"
 
 #####################
 # Differential gene expression analysis with DESeq2
 #####################
 
 # Sample information
-factors: [Treatment]
+factors: [Group]
 sample_info:
   sample_1 : [control]
   sample_2 : [control]
@@ -53,4 +66,4 @@ sample_info:
   sample_4 : [treated]
   sample_5 : [treated]
   sample_6 : [treated]
-design: Treatment
+design: Group

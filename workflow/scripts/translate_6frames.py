@@ -13,12 +13,13 @@ def checklen(seq):
 
 
 parser = argparse.ArgumentParser()
-parser.add_argument('input_file',help="fastq file containing reads")
+parser.add_argument('input_file',help="file containing reads")
+parser.add_argument('file_type',help="input file type")
 parser.add_argument('output_file',help="output file containing translated sequences in all six frames")
 args = parser.parse_args()
 with open(args.input_file,"r") as fin,open(args.output_file,"w") as fout:
 
-    for seq_record in SeqIO.parse(fin,"fastq"):
+    for seq_record in SeqIO.parse(fin,args.file_type):
         header = seq_record.id
         source = seq_record.seq
         source_rc = source.reverse_complement()
