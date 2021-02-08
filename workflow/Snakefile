@@ -1,4 +1,5 @@
 from os import path
+import itertools 
 #configfile: "testdata/config_test.yaml"
 
 if "fasta" in config:
@@ -12,7 +13,6 @@ else:
     interleave = srcdir("scripts/fastq-to-fasta-interleave.sh")
     file_type = "fastq"
 
-print(interleave)
 seq_count = srcdir("scripts/seq_count.py")
 trans_6frame = srcdir("scripts/translate_6frames.py")
 last_deseq2 = srcdir("scripts/last2deseq.R")
@@ -83,11 +83,28 @@ for n,factor in enumerate(config["factors"]):
     	if(level[n] not in factorsxlevels[factor]):
    	    factorsxlevels[factor].append(level[n])
    	        
-for factor in config["design"].split(" + "):
+for factor in config["design"].split("+"):
     for x in range(1,len(factorsxlevels[factor])):
         deseqOutput.append(dynamicFiles.format(factor,factorsxlevels[factor][x],factorsxlevels[factor][0]))    
-    
+  
+for term in config["design"].split("+") :
+    if("*" in term):
+        interactionTerm = term.replace(" ", "").split("*")
+        for order in range(1,len(interactionTerm)):
+            for comb in list(itertools.combinations(interactionTerm, order + 1)):
+                coeff = [list(map(lambda x: i+x, factorsxlevels[i][1:])) for i in comb]
+                coeffTests = [config["out_dir"]+"DEanalysis/Test_result-" + '.'.join(i) + ".csv" for i in list(itertools.product(*coeff))]
+                deseqOutput.extend(coeffTests)
+
+all_input = deseqOutput
+if "deanalysis" in config:
+    if config["deanalysis"].lower() == "no":
+        all_input = expand(config["out_dir"]+"counts/{sample_id}/{sample_id}.counts",sample_id=config["reads"].keys())
+
 # Rule declarations begin here:
+rule all: #Initial Rule in snakemake
+    input: all_input
+
 rule deseq: #Rule for performing Differential Expression Analysis
     input:
         [

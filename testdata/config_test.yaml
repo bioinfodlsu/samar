@@ -31,6 +31,13 @@ reads:
 # Output folder
 out_dir: test_output/
 
+#####################
+# Differential Expression Analysis 
+#####################
+
+##Uncomment below to disable differential expression analysis by deseq2 (default: yes)
+#deseq : "no"
+
 
 #####################
 # Training scoring scheme
@@ -51,12 +58,12 @@ fasta: "yes"
 #####################
 
 # Sample information
-factors: ["Gender","Color"]
+factors: [Group]
 sample_info:
-  sample_1 : ["F","Red"]
-  sample_2 : ["F","Blu"]
-  sample_3 : ["F","Ylw"]
-  sample_4 : ["M","Red"]
-  sample_5 : ["M","Blu"]
-  sample_6 : ["M","Ylw"]
-design: Gender + Color
+  sample_1 : [control]
+  sample_2 : [control]
+  sample_3 : [control]
+  sample_4 : [treated]
+  sample_5 : [treated]
+  sample_6 : [treated]
+design: Group
