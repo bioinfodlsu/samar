@@ -36,7 +36,7 @@ out_dir: test_output/
 #####################
 
 ##Uncomment below to disable differential expression analysis by deseq2 (default: yes)
-#deseq : "no"
+#deanalysis : "no"
 
 
 #####################
@@ -44,14 +44,14 @@ out_dir: test_output/
 #####################
 
 ##Uncomment below to disable scoring scheme training by last-train
-training : "no"
+#training : "no"
 
 #####################
 # Input File Type 
 #####################
 
 ##Uncomment below to change input file type from fastq (default) to fasta
-fasta: "yes"
+#fasta: "yes"
 
 #####################
 # Differential gene expression analysis with DESeq2

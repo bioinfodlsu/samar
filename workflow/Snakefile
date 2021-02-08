@@ -68,7 +68,6 @@ def get_input_align_last(wildcards):
     return input_dict
     
 deseqOutput = [config["out_dir"]+'DEanalysis/DE_count_summary.txt',
-	    	config["out_dir"]+'DEanalysis/DESeq2_fit.csv',
 	    	config["out_dir"]+'DEanalysis/DESeq2_fit.RDS'
 	    	]
 
