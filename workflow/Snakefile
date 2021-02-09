@@ -1,5 +1,5 @@
 from os import path
-import itertools 
+import itertools
 #configfile: "testdata/config_test.yaml"
 
 if "fasta" in config:
@@ -49,29 +49,29 @@ def getSTD(wildcard):
 def getScoring(wildcards):
     if "training" in config:
         if config["training"].lower() != "no":
-            return config["out_dir"]+"score_sample/scoring_scheme"
+            return "{}/score_sample/scoring_scheme".format(config["out_dir"])
         else: return "BL62"
     else:
         return "BL62"
 
 def get_input_align_last(wildcards):
     input_dict = {}
-    input_dict["reference_flag"] = config["out_dir"]+"last_index/index.done"
+    input_dict["reference_flag"] = "{}/last_index/index.done".format(config["out_dir"])
     input_dict["reads1"] = get_read1(wildcards)
     input_dict["reads2"] = get_read2(wildcards)
     #input_dict["frag_len_est"] = config["out_dir"]+"last_alignments/{sample_id}.frag_len_est"
     if "training" in config:
         if config["training"].lower() != "no":
-            input_dict["scoring"] = config["out_dir"]+"score_sample/scoring_scheme"
+            input_dict["scoring"] = "{0}/score_sample/scoring_scheme".format(config["out_dir"])
     else:
-        input_dict["scoring"] = config["out_dir"]+"score_sample/scoring_scheme"
+        input_dict["scoring"] = "{0}/score_sample/scoring_scheme".format(config["out_dir"])
     return input_dict
-    
-deseqOutput = [config["out_dir"]+'DEanalysis/DE_count_summary.txt',
-	    	config["out_dir"]+'DEanalysis/DESeq2_fit.RDS'
+
+deseqOutput = ["{0}/DEanalysis/DE_count_summary.txt".format(config["out_dir"]),
+	    	   "{0}/DEanalysis/DESeq2_fit.RDS".format(config["out_dir"])
 	    	]
 
-dynamicFiles = config["out_dir"]+'DEanalysis/Test_result-{}_{}_vs_{}.csv'
+dynamicFiles = "{0}/DEanalysis/".format(config["out_dir"])+"Test_result-{}_{}_vs_{}.csv"
 
 levels = list(dict(config["sample_info"]).values())
 factorsxlevels = {}
@@ -81,25 +81,25 @@ for n,factor in enumerate(config["factors"]):
     for level in levels:
     	if(level[n] not in factorsxlevels[factor]):
    	    factorsxlevels[factor].append(level[n])
-   	        
+
 for factor in config["design"].split(" + "):
     if("*" not in factor):
         for x in range(1,len(factorsxlevels[factor])):
-            deseqOutput.append(dynamicFiles.format(factor,factorsxlevels[factor][x],factorsxlevels[factor][0]))    
- 
+            deseqOutput.append(dynamicFiles.format(factor,factorsxlevels[factor][x],factorsxlevels[factor][0]))
+
 for term in config["design"].split("+") :
     if("*" in term):
         interactionTerm = term.replace(" ", "").split("*")
         for order in range(1,len(interactionTerm)):
             for comb in list(itertools.combinations(interactionTerm, order + 1)):
                 coeff = [list(map(lambda x: i+x, factorsxlevels[i][1:])) for i in comb]
-                coeffTests = [config["out_dir"]+"DEanalysis/Test_result-" + '.'.join(i) + ".csv" for i in list(itertools.product(*coeff))]
+                coeffTests = [ "{}/DEanalysis/Test_result-".format(config["out_dir"]) + '.'.join(i) + ".csv" for i in list(itertools.product(*coeff))]
                 deseqOutput.extend(coeffTests)
 
 all_input = deseqOutput
 if "deanalysis" in config:
     if config["deanalysis"].lower() == "no":
-        all_input = expand(config["out_dir"]+"counts/{sample_id}/{sample_id}.counts",sample_id=config["reads"].keys())
+        all_input = expand("{out_dir}/counts/{sample_id}/{sample_id}.counts",out_dir=[config["out_dir"]],sample_id=config["reads"].keys())
 
 # Rule declarations begin here:
 rule all: #Initial Rule in snakemake
@@ -107,9 +107,7 @@ rule all: #Initial Rule in snakemake
 
 rule deseq: #Rule for performing Differential Expression Analysis
     input:
-        [
-            expand(config["out_dir"]+"counts/{sample_id}/{sample_id}.counts",sample_id=config["reads"].keys())
-        ]
+        expand("{out_dir}/counts/{sample_id}/{sample_id}.counts",out_dir=[config["out_dir"]],sample_id=config["reads"].keys())
     output:
     	deseqOutput,
     params:
@@ -128,7 +126,7 @@ rule last_db: #Rule for constructing LAST index
     input:
         reference = config["reference_p"]
     output:
-       touch(config["out_dir"]+'last_index/index.done')
+       touch("{0}/last_index/index.done".format(config["out_dir"]))
     params:
        index_basename="{0}/last_index/index".format(config["out_dir"])
     conda:
@@ -139,7 +137,7 @@ rule last_db: #Rule for constructing LAST index
 
 rule last_score_training: #Rule for training score parameters
     input:
-    	reference_flag = config["out_dir"]+"last_index/index.done",
+    	reference_flag = "{0}/last_index/index.done".format(config["out_dir"]),
 	    query = config["reads"][list(config["reads"].keys())[0]][0],
     params:
         last_index_basename="{0}/last_index/index".format(config["out_dir"]),
@@ -147,7 +145,7 @@ rule last_score_training: #Rule for training score parameters
         last_trans_sample1="{0}/score_sample/translated.fasta".format(config["out_dir"]),
         file_type=file_type,
     output:
-    	config["out_dir"]+"score_sample/scoring_scheme"
+    	"{0}/score_sample/scoring_scheme".format(config["out_dir"])
     conda:
     	"env/lastxpy.yaml"
     shell:
@@ -165,11 +163,11 @@ rule last_frag_stat_est: #Rule for estimating length distribution of paired-end 
         #reads2 = get_read2,
         #scoring = config["out_dir"]+"last_sample/scoring_scheme",
     params:
-        last_index_basename= config["out_dir"]+"/last_index/index",
-        last_al = config["out_dir"]+"/last_alignments",
+        last_index_basename= "{0}/last_index/index".format(config["out_dir"]),
+        last_al = "{0}/last_alignments".format(config["out_dir"]),
         scoring = getScoring
     output :
-        frag_len_est=config["out_dir"]+"last_alignments/{sample_id}.frag_len_est",
+        frag_len_est="{0}/last_alignments/{{sample_id}}.frag_len_est".format(config["out_dir"])
     conda:
     	"env/last.yaml"
     shell:
@@ -185,7 +183,7 @@ rule last_frag_stat_est: #Rule for estimating length distribution of paired-end 
 rule align_last: #Rule for aligning RNA-seq reads to protein database
     input:
         unpack(get_input_align_last),
-        frag_len_est = config["out_dir"]+"last_alignments/{sample_id}.frag_len_est"
+        frag_len_est = "{0}/last_alignments/{{sample_id}}.frag_len_est".format(config["out_dir"])
     #    frag_len_est = config["out_dir"]+"last_alignments/{sample_id}.frag_len_est"
     #    reference_flag = config["out_dir"]+"last_index/index.done",
     #    reads1 = get_read1,
@@ -200,7 +198,7 @@ rule align_last: #Rule for aligning RNA-seq reads to protein database
         scoring = getScoring
     threads: workflow.cores/len(config["reads"])
     output:
-        config["out_dir"]+"last_alignments/{sample_id}.tab"
+        "{0}/last_alignments/{{sample_id}}.tab".format(config["out_dir"])
     conda:
     	"env/lastal.yaml"
     shell:
@@ -211,13 +209,13 @@ rule align_last: #Rule for aligning RNA-seq reads to protein database
 
 rule count_last: #Rule for getting count data from LAST alignments
     input:
-        alignments = config["out_dir"]+"last_alignments/{sample_id}.tab",
+        alignments = "{0}/last_alignments/{{sample_id}}.tab".format(config["out_dir"]),
         reference = config["reference_p"]
     params:
     	mean = getMean,
     	std = getSTD,
     output:
-        config["out_dir"]+"counts/{sample_id}/{sample_id}.counts"
+        "{0}/counts/{{sample_id}}/{{sample_id}}.counts".format(config["out_dir"])
     conda:
     	"env/counting.yaml"
     shell:

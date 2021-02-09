@@ -31,23 +31,18 @@ reads:
 # Output folder
 out_dir: test_output/
 
-#####################
-# Differential Expression Analysis 
-#####################
-
-##Uncomment below to disable differential expression analysis by deseq2 (default: yes)
-#deseq : "no"
-
-
-#####################
-# Training scoring scheme
-#####################
+#############
+# What (not) to perform
+############
 
 ##Uncomment below to disable scoring scheme training by last-train
-#training : "no"
+training : "no"
+##Uncomment below to disable differential expression analysis by deseq2 (default: yes)
+deseq : "no"
+
 
 #####################
-# Input File Type 
+# Input File Type
 #####################
 
 ##Uncomment below to change input file type from fastq (default) to fasta
