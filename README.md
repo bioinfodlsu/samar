@@ -5,8 +5,8 @@ For non-model organisms, the conventional strategy for DE analysis has been to b
 
 This pipeline takes in paired-end RNA-seq reads and a reference proteome (which would have been used for annotation in the assembly-based approach) and does the following:
 
-1. Uses [LAST](http://last.cbrc.jp) to learn the alignment scoring parameters suitable for the input data, and to estimate the paired-end fragment size distribution
-2. Uses [LAST](http://last.cbrc.jp) to directly align RNA-seq reads to the high-confidence proteome that would have been otherwise used for annotation, and generates counts
+1. Uses [LAST](https://gitlab.com/mcfrith/last) to learn the alignment scoring parameters suitable for the input data, and to estimate the paired-end fragment size distribution
+2. Uses LAST to directly align RNA-seq reads to the high-confidence proteome that would have been otherwise used for annotation, and generates counts
 3. Estimates the counts of reads aligning to each protein entry, using a rescue strategy for multi-mapping reads.
 4. Runs [DESeq2](https://bioconductor.org/packages/release/bioc/html/DESeq2.html) for differential expression analysis based on the count data.
 
