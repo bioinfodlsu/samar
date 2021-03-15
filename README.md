@@ -1,4 +1,6 @@
 # 0. Introduction
+Welcome to SAMAR (Speedy, Assembly-free Method to Analyze RNA-seq expression data) !
+
 This pipeline allows performing rapid differential expression (DE) analysis in non-model organisms, without the need for computationally expensive de-novo transcriptome assembly. 
 
 For non-model organisms, the conventional strategy for DE analysis has been to begin by constructing a de-novo transcriptome assembly and annotating it against a high-confidence protein database -- the assembly serving as a reference for read mapping and the annotation allowing for functional analysis of genes found to have DE. 
