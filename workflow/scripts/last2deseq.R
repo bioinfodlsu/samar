@@ -1,16 +1,16 @@
 #!/usr/bin/env Rscript
 
-last2Deseq <- function(in_dir, df_sampleInfo, design, df_protein2gene=NULL, countsFromAbundance="no"){
-  library("DESeq2", quietly = TRUE, warn.conflicts = FALSE)
-  library("tximport", quietly = TRUE, warn.conflicts = FALSE)
+..last2Deseq <- function(in_dir, df_sampleInfo, design, gene_isoform_mapping=NULL, countsFromAbundance="no"){
+  library("DESeq2", quietly = TRUE, warn.conflicts = FALSE, verbose = FALSE)
+  library("tximport", quietly = TRUE, warn.conflicts = FALSE, verbose = FALSE)
   
   samplenames <- df_sampleInfo[,1]
-  filenames_counts <- file.path(in_dir, samplenames, paste0(samplenames, ".counts"))
+  file_counts <- file.path(in_dir, samplenames, paste0(samplenames, ".counts"))
   
-  if(is.null(df_protein2gene)){
-    txi <- tximport(filenames_counts, type = "salmon", txIn = TRUE, txOut = TRUE)
+  if(is.null(gene_isoform_mapping)){
+    txi <- tximport(file_counts, type = "salmon", txIn = TRUE, txOut = TRUE)
   }else{
-    txi <- tximport(filenames_counts, type = "salmon", txIn = TRUE, txOut = FALSE, tx2gene = df_protein2gene, countsFromAbundance = countsFromAbundance)
+    txi <- tximport(file_counts, type = "salmon", txIn = TRUE, txOut = FALSE, tx2gene = gene_isoform_mapping, countsFromAbundance = countsFromAbundance)
   }
   
   deseq <- DESeq2::DESeqDataSetFromTximport(txi, colData = df_sampleInfo, design = design)
@@ -18,43 +18,21 @@ last2Deseq <- function(in_dir, df_sampleInfo, design, df_protein2gene=NULL, coun
   return(deseq)
 }
 
-if(sys.nframe() == 0L) {  # mimics __name__ == "main" of python
-  library("optparse", quietly = TRUE, warn.conflicts = FALSE)
-  option_list = list(
-    make_option(c("--in_dir"),  help="directory of LAST counts",
-                type="character", default=NULL),
 
-    make_option(c("--out_dir"),  help="",
-                type="character", default="r output"),
-    
-    make_option(c("--sample_info"),  help="",
-                type="character", default=NULL),
-    
-    make_option(c("--factors"),  help="",
-                type="character", default=NULL),
-
-    make_option(c("--design"),  help="formula which expresses how the counts depend on the variables in sample info",
-                type="character", default=NULL)
-  )
-
-  opt_parser <- OptionParser(option_list=option_list)
-  opt <- parse_args(opt_parser)
-
-  # print("--------Passed Arguments---------")
-  # for(i in names(opt)){
-  #   print(paste0(i,": ", opt[[i]]))
-  # }
-  
-  in_dir <- opt$in_dir
-  out_dir <- opt$out_dir # TODO: ask if kyle creates this or I create this
-  sample_info <- rjson::fromJSON(opt$sample_info)
-  factors <- rjson::fromJSON(opt$factors)
-  design <- as.formula(paste0("~", opt$design))
+last2deseq <- function(in_dir, out_dir, sample_info, factors, design, gene_isoform_mapping = NULL){
+  sample_info <- rjson::fromJSON(sample_info)
+  factors <- rjson::fromJSON(factors)
+  design <- as.formula(paste0("~", design))
   
   # ------- Data Validation ------- # 
   # Check if in_dir exists
   if(!dir.exists(in_dir)) { 
     stop("File directory `in_dir` does not exist.")
+  }
+  
+  # Check if gene_isoform_mapping exists
+  if(!is.null(gene_isoform_mapping) && !file.exists(gene_isoform_mapping)) { 
+    stop("File `gene_isoform_mapping` does not exist.")
   }
   
   list_files <- list.files(in_dir, recursive = TRUE)
@@ -74,10 +52,8 @@ if(sys.nframe() == 0L) {  # mimics __name__ == "main" of python
   }
   
   # Check if formula contains the factors declared
-  str_design <- strsplit(opt$design, "\\+|\\*")[[1]]
-  str_design <- gsub(" ", "", str_design)
-  for(i in str_design){
-    if(!i %in% factors){
+  for(f in all.vars(design)){
+    if(!f %in% factors){
       stop(paste0("Design contains undeclared factor `", i, "`."))
     }
   }
@@ -91,7 +67,7 @@ if(sys.nframe() == 0L) {  # mimics __name__ == "main" of python
   }
   
   # ------- DESeq2 Analysis ------- # 
-  deseq <- last2Deseq(in_dir = in_dir, df_sampleInfo = df_sampleInfo, design = design)
+  deseq <- ..last2Deseq(in_dir = in_dir, df_sampleInfo = df_sampleInfo, design = design, gene_isoform_mapping = gene_isoform_mapping)
   deseq <- DESeq2::DESeq(deseq)
   
   
@@ -111,4 +87,42 @@ if(sys.nframe() == 0L) {  # mimics __name__ == "main" of python
   sink()
   
   message("Last counts to DESeq2 analysis done!")
+}
+
+if(sys.nframe() == 0L) {  # mimics `__name__ == "main"` of python
+  library("optparse", quietly = TRUE, warn.conflicts = FALSE)
+  option_list = list(
+    make_option("--in_dir",  help="directory of LAST counts",
+                type="character", default=NULL),
+    
+    make_option("--out_dir",  help="",
+                type="character", default="r output"),
+    
+    make_option("--sample_info",  help="json array of sample info. same format as the one in SnakeMake",
+                type="character", default=NULL),
+    
+    make_option("--factors",  help="",
+                type="character", default=NULL),
+    
+    make_option("--design",  help="formula which expresses how the counts depend on the variables in sample info",
+                type="character", default=NULL),
+    
+    make_option("--gene_isoform_mapping", help="Tab delimited file with columns `Gene.stable.ID` and `Transcript.stable.ID`", 
+                type="character", default=NULL)
+  )
+  
+  opt <- parse_args(OptionParser(option_list=option_list))
+  attach(opt)
+  
+  # print("--------Passed Arguments---------")
+  # for(i in names(opt)){
+  #   print(paste0(i,": ", opt[[i]]))
+  # }
+  
+  last2deseq(in_dir = in_dir,
+             out_dir = out_dir,
+             sample_info = sample_info,
+             factors = factors,
+             design = design,
+             gene_isoform_mapping = gene_isoform_mapping)
 }
