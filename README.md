@@ -84,6 +84,7 @@ In case you wish to perform your own differential gene expression analysis, the 
 
 ## 3. Config
 Apart from the paths to the read file and the reference proteome, the following parameters can be set in the YAML config file.
+
 | Keyword       |   Possible values         | Default  |  Description  |
 | ------------- |------------------------| ------ |  ------------|
 | filetype | fasta, fastq  | fastq | -|
