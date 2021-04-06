@@ -1,4 +1,4 @@
-# Template config file.
+# Config file for testdata
 # Here you can specify the paths to the input and output, and other additional parameters.
 # Arguments are specified in a key:value format, do NOT change the key names.
 
@@ -15,7 +15,7 @@ reference_p: testdata/ref.fa
 
 # Fastq files containing paired RNA-seq reads.
 reads:
-  sample_1: #Sample 1. Provide the paired files as a list of 2 items.
+  sample_1: #Sample 1. Do not rename this.
     [ testdata/reads_1_1.fastq, testdata/reads_1_2.fastq ] # Do not remove the [ and ]. Separate the file names by a comma.
   sample_2: #Sample 2.
     [ testdata/reads_2_1.fastq, testdata/reads_2_2.fastq]
@@ -29,7 +29,11 @@ reads:
     [ testdata/reads_6_1.fastq, testdata/reads_6_2.fastq]
 
 # Output folder
-out_dir: test_output/
+out_dir: test_output
+
+
+##Uncomment below to change reads file type from fastq (default) to fasta
+#filetype: "fasta"
 
 #############
 # What (not) to perform
@@ -38,27 +42,19 @@ out_dir: test_output/
 ##Uncomment below to disable scoring scheme training by last-train
 training : "no"
 ##Uncomment below to disable differential expression analysis by deseq2 (default: yes)
-deseq : "no"
-
-
-#####################
-# Input File Type
-#####################
-
-##Uncomment below to change input file type from fastq (default) to fasta
-#fasta: "yes"
+#deanalysis : "no"
 
 #####################
 # Differential gene expression analysis with DESeq2
 #####################
 
 # Sample information
-factors: [Group]
+factors: [Group] #Name of factors in the study. If there are multiple factors, separate by comma : [factor1, factor2,..]
 sample_info:
-  sample_1 : [control]
+  sample_1 : [control] #Sample numbers here correspond to the sample numbers in the reads entry
   sample_2 : [control]
   sample_3 : [control]
   sample_4 : [treated]
   sample_5 : [treated]
   sample_6 : [treated]
-design: Group
+design: Group #formula for the model matrix

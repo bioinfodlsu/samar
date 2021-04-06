@@ -6,42 +6,59 @@
 # Input and output
 #####################
 
+## Reference protein database.
 # It is recommended to provide absolute paths, i.e. beginning with root (/).
-# Else, paths are considered to be relative to the location from which snakemake is called.
-
-# Reference protein database.
+# Else, paths are considered to be relative to SAMAR top-level directory.
 reference_p: /path/to/reference/proteome
 
-# Fastq files containing paired RNA-seq reads, 1 pair per replicate
+## RNA-seq reads
+# It is recommended to provide absolute paths, i.e. beginning with root (/).
+# Else, paths are considered to be relative to SAMAR top-level directory.
 reads:
   sample_1: #Sample 1. Provide the paired files as a list of 2 items.
     [ /path/to/sample1_L.fastq, /path/to/smaple1_R.fastq ] # Do not remove the [ and ]. Separate the file names by a comma.
   sample_2: #Sample 2.
     [ /path/to/sample2_L.fastq, /path/to/sample2_R.fastq]
-  sample_3: #Sample 2.
+  sample_3: #Sample 3.
     [ /path/to/sample3_L.fastq, /path/to/sample3_R.fastq]
-  sample_4: #Sample 2.
+  sample_4: #Sample 4.
     [ /path/to/sample4_L.fastq, /path/to/sample4_R.fastq]
-  sample_5: #Sample 2.
+  sample_5: #Sample 5.
     [ /path/to/sample5_L.fastq, /path/to/sample5_R.fastq]
-  sample_6: #Sample 2.
+  sample_6: #Sample 6.
     [ /path/to/sample6_L.fastq, /path/to/sample6_R.fastq]
   #add more samples as needed
 
-# Output folder
+## Output folder
+# It is recommended to provide absolute paths, i.e. beginning with root (/).
+# Else, paths are considered to be relative to SAMAR top-level directory.
 out_dir: /path/to/output/folder
 
+## Reads file type : fasta or fastq. If not specified, defaults to fastq.
+#filetype: "fasta"
+
 #####################
-# Differential gene expression analysis with DESeq2
+# Training the scoring scheme
 #####################
 
-# Information about the experiment design
-# Example below corresponds to an experiment with 2 factors (Strain and Treatment),
+##Enable/disable scoring scheme training by last-train. Possible values: yes or no. Defaults to yes if unspecified.
+#training : "no"
+
+
+#####################
+# Configuratoin for differential gene expression analysis with DESeq2
+#####################
+
+## Enable/disable differential expression analysis. Possible values: yes or no. Defaults to "yes" if unspecified.
+#deanalysis : "no"
+
+## Information about the experiment design
+## First example below corresponds to an experiment with 2 factors (Strain and Treatment),
 # 2 levels per factor (Strain can be wild_type or mutant, and Treatment can be control or treated.
 # Each factor combination has 2 replicates.
 factors: [Strain, Treatment] #list of names of the factors/co-variates.
 sample_info: #
-  sample_1 : [wild_type,control] #list of names of level of the factors.
+  sample_1 : [wild_type,control] #list of names of level of the factors, which the sample corresponds to.
   sample_2 : [wild_type,control]
   sample_3 : [wild_type,treatment]
   sample_4 : [wild_type,treatment]
@@ -49,11 +66,15 @@ sample_info: #
   sample_6 : [mutant, control]
   sample_7 : [mutant, treated]
   sample_8 : [mutant, treated]
-design: Strain + Treatment + Strain*Treatment
+design: Strain + Treatment + Strain*Treatment #specifying the formula for the design matrix. The last term refers to interaction between the two factors.
 
-#####################
-# Training scoring scheme
-#####################
-
-##Uncomment/comment below to enable/disable scoring scheme training by last-train
-#training : "no"
+# The next example is a simpler and more common case with only one factor with 2 levels.
+factors: [Group] #list of names of the factors/co-variates.
+sample_info: #
+  sample_1 : [control] #list of names of level of the factors, which the sample corresponds to.
+  sample_2 : [control]
+  sample_3 : [control]
+  sample_4 : [treated]
+  sample_5 : [treated]
+  sample_6 : [treated]
+design: Group

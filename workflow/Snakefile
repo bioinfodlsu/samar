@@ -2,11 +2,11 @@ from os import path
 import itertools
 #configfile: "testdata/config_test.yaml"
 
-if "fasta" in config:
-    if config["fasta"].lower() != "no":
+if "filetype" in config:
+    if config["filetype"] == "fasta":
     	interleave = srcdir("scripts/fasta-interleave.sh")
     	file_type = "fasta"
-    else:
+    elif config["filetype"] == "fastq":
     	interleave = srcdir("scripts/fastq-to-fasta-interleave.sh")
     	file_type = "fastq"
 else:
@@ -120,7 +120,7 @@ rule deseq: #Rule for performing Differential Expression Analysis
     	"env/r.yaml"
     shell:
     	"Rscript {last_deseq2} --in_dir '{params.count_dir}' --factors '{params.factors}'"
-    	" --design '{params.design}' --sample_info '{params.sample_info}' --out_dir '{params.outdir}'"
+    	" --design '{params.design}' --sample_info '{params.sample_info}' --out_dir '{params.outdir}' --gene_isoform_mapping NULL "
 
 rule last_db: #Rule for constructing LAST index
     input:
