@@ -85,7 +85,7 @@ In case you wish to perform your own differential gene expression analysis, the 
 ## 3. Config
 Apart from the paths to the read file and the reference proteome, the following parameters can be set in the YAML config file.
 | Keyword       |   Possible values         | Default  |  Description  |
-| ------------- |:------------------------:| ------ |  ------------|
+| ------------- |------------------------| ------ |  ------------|
 | filetype | fasta, fastq  | fastq | -|
 | training | yes, no | yes | Train the alignment scoring parameter for the input data. The default scoring scheme is BLOSUM62 |
 |deanalysis | yes, no | yes |  Pipeline stops after counting, without running DE anlaysis|
