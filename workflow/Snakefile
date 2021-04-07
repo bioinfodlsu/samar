@@ -120,7 +120,7 @@ rule deseq: #Rule for performing Differential Expression Analysis
     	"env/r.yaml"
     shell:
     	"Rscript {last_deseq2} --in_dir '{params.count_dir}' --factors '{params.factors}'"
-    	" --design '{params.design}' --sample_info '{params.sample_info}' --out_dir '{params.outdir}' --gene_isoform_mapping NULL "
+    	" --design '{params.design}' --sample_info '{params.sample_info}' --out_dir '{params.outdir}'"
 
 rule last_db: #Rule for constructing LAST index
     input:
