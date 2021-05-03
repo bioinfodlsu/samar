@@ -89,6 +89,6 @@ Apart from the paths to the read file and the reference proteome, the following 
 | ------------- |------------------------| ------ |  ------------|
 | filetype | fasta, fastq  | fastq | -|
 | training | yes, no | yes | Train the alignment scoring parameter for the input data. The default scoring scheme is BLOSUM62 |
-|deanalysis | yes, no | yes |  Pipeline stops after counting, without running DE anlaysis|
+|deanalysis | yes, no | yes |  If set to "no", the pipeline does not proceed to DE anlaysis and halts after counting. If keyword is not provided, value defaults to "yes" |
 |factor| [factor1, factor2, .. ] | - | Name of factors in the study |
 | sample_info: sample_i: |  [level of factor1, level of factor2, ..] | -| Describes the factor levels which the sample corresponds to |
