@@ -46,10 +46,12 @@ out_dir: /path/to/output/folder
 
 
 #####################
-# Configuratoin for differential gene expression analysis with DESeq2
+# Configuration for differential gene expression analysis with DESeq2
 #####################
 
-## Enable/disable differential expression analysis. Possible values: yes or no. Defaults to "yes" if unspecified.
+## Enable/disable differential expression analysis.
+##Possible values: yes or no.
+##Defaults to "yes" if unspecified, in which case you must specify the "factors", "sample_info", "design" entries below.
 #deanalysis : "no"
 
 ## Information about the experiment design
@@ -69,7 +71,7 @@ sample_info: #
 design: Strain + Treatment + Strain*Treatment #specifying the formula for the design matrix. The last term refers to interaction between the two factors.
 
 # The next example is a simpler and more common case with only one factor with 2 levels.
-factors: [Group] #list of names of the factors/co-variates.
+factors: [Treatment] #list of names of the factors/co-variates.
 sample_info: #
   sample_1 : [control] #list of names of level of the factors, which the sample corresponds to.
   sample_2 : [control]
@@ -77,4 +79,4 @@ sample_info: #
   sample_4 : [treated]
   sample_5 : [treated]
   sample_6 : [treated]
-design: Group
+design: Treatment

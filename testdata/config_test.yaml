@@ -7,13 +7,14 @@
 # Input and output
 #####################
 
+## Reference protein database.
 # It is recommended to provide absolute paths, i.e. beginning with root (/).
-# Else, paths are considered to be relative to the location from which snakemake is called.
-
-# Reference protein database.
+# Else, paths are considered to be relative to SAMAR top-level directory.
 reference_p: testdata/ref.fa
 
-# Fastq files containing paired RNA-seq reads.
+## RNA-seq reads
+# It is recommended to provide absolute paths, i.e. beginning with root (/).
+# Else, paths are considered to be relative to SAMAR top-level directory.
 reads:
   sample_1: #Sample 1. Do not rename this.
     [ testdata/reads_1_1.fastq, testdata/reads_1_2.fastq ] # Do not remove the [ and ]. Separate the file names by a comma.
@@ -28,33 +29,38 @@ reads:
   sample_6: #Sample 6.
     [ testdata/reads_6_1.fastq, testdata/reads_6_2.fastq]
 
-# Output folder
+## Output folder
+# It is recommended to provide absolute paths, i.e. beginning with root (/).
+# Else, paths are considered to be relative to SAMAR top-level directory.
 out_dir: test_output
 
 
 ##Uncomment below to change reads file type from fastq (default) to fasta
 #filetype: "fasta"
 
-#############
-# What (not) to perform
-############
+#####################
+# Training the scoring scheme
+#####################
 
-##Uncomment below to disable scoring scheme training by last-train
+##Enable/disable scoring scheme training by last-train. Possible values: yes or no. Defaults to yes if unspecified.
 training : "no"
-##Uncomment below to disable differential expression analysis by deseq2 (default: yes)
-#deanalysis : "no"
 
 #####################
-# Differential gene expression analysis with DESeq2
+# Configuration for differential gene expression analysis with DESeq2
 #####################
 
-# Sample information
-factors: [Group] #Name of factors in the study. If there are multiple factors, separate by comma : [factor1, factor2,..]
+## Enable/disable differential expression analysis.
+##Possible values: yes or no.
+##Defaults to "yes" if unspecified, in which case you must specify the "factors", "sample_info", "design" entries below.
+deanalysis : "no"
+
+#Sample information
+factors: [Treatment] #list of names of the factors/co-variates.
 sample_info:
-  sample_1 : [control] #Sample numbers here correspond to the sample numbers in the reads entry
+  sample_1 : [control] #list of names of level of the factors, which the sample corresponds to.
   sample_2 : [control]
   sample_3 : [control]
   sample_4 : [treated]
   sample_5 : [treated]
   sample_6 : [treated]
-design: Group #formula for the model matrix
+design: Treatment #formula for the model matrix
