@@ -2,13 +2,15 @@
 Welcome to SAMAR (Speedy, Assembly-free Method to Analyze RNA-seq expression data) -- a quick-and-easy way to perform differential expression (DE) analysis in non-model organisms.
 
 For non-model organisms, conventional DE analysis begins by constructing a de-novo transcriptome assembly and annotating it against a high-confidence protein database -- the assembly serving as a reference for read mapping and the annotation allowing for functional analysis of DE genes. 
-This pipeline provides a shortcut in which RNA-seq reads are directly aligned to the reference proteome which would have been otherwise used for annotation in the assembly-based approach. This saves you a LOT of time and other computational resources.
+Assembly can be complicated, error-prone, requires massive computational resources, and time-consuming.
+This pipeline provides a shortcut in which RNA-seq reads are directly aligned to the reference proteome which would have been otherwise used for annotation in the assembly-based approach. 
+This approach is super fast and light-weight.
 
 Specifically, SAMAR performs the following steps:
 
 1. Uses [LAST](https://gitlab.com/mcfrith/last) to learn the alignment scoring parameters suitable for the input data, and to estimate the paired-end fragment size distribution of paired-end reads,
 2. Uses LAST to directly align RNA-seq reads to the high-confidence proteome that would have been otherwise used for annotation, and generates counts,
-3. Estimates the counts of reads aligning to each protein entry, using a simple rescue strategy for multi-mapping reads,
+3. Estimates the counts of reads aligning to each protein entry in the reference,
 4. Uses [tximport](https://bioconductor.org/packages/release/bioc/html/tximport.html) to read in the counts (and optionally to aggregate isoform-level counts into gene-level counts),
 5. Runs [DESeq2](https://bioconductor.org/packages/release/bioc/html/DESeq2.html) for differential expression analysis based on the count data.
 
