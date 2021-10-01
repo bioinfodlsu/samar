@@ -94,3 +94,7 @@ Apart from the paths to the read file and the reference proteome, the following 
 |deanalysis | yes, no | yes |  If set to "no", the pipeline does not proceed to DE anlaysis and halts after counting. If keyword is not provided, value defaults to "yes" |
 |factor| [factor1, factor2, .. ] | - | Name of factors in the study |
 | sample_info: sample_i: |  [level of factor1, level of factor2, ..] | -| Describes the factor levels which the sample corresponds to |
+
+## 4. Publication
+A manuscript describing SAMAR is currently under review. 
+Here is a [preprint](https://doi.org/10.1101/2021.04.23.441097). 
