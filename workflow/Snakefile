@@ -204,8 +204,8 @@ rule align_last: #Rule for aligning RNA-seq reads to protein database
         std = getSTD,
         #scoring = config["out_dir"]+"last_sample/scoring_scheme"
         scoring = getScoring
-    #threads: workflow.cores/len(config["reads"])
-    threads: 10
+    threads: workflow.cores/len(config["reads"])
+    #threads: 1
     output:
         "{0}/last_alignments/{{sample_id}}.tab".format(config["out_dir"])
     conda:
