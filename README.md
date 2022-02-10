@@ -96,5 +96,7 @@ Apart from the paths to the read file and the reference proteome, the following 
 | sample_info: sample_i: |  [level of factor1, level of factor2, ..] | -| Describes the factor levels which the sample corresponds to |
 
 ## 4. Publication
-A manuscript describing SAMAR is currently under review. 
-Here is a [preprint](https://doi.org/10.1101/2021.04.23.441097). 
+Assembly-free rapid differential gene expression analysis in non-model organisms using DNA-protein alignment, BMC Genomics 23, 97,(2022) [Link](https://bmcgenomics.biomedcentral.com/articles/10.1186/s12864-021-08278-7). 
+
+## 5. Contact
+For comments, suggestions, issues, please send an email to anish.shrestha--atmark--dlsu.edu.ph
