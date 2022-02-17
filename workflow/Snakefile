@@ -192,12 +192,7 @@ rule align_last: #Rule for aligning RNA-seq reads to protein database
     input:
         unpack(get_input_align_last),
         frag_len_est = "{0}/last_alignments/{{sample_id}}.frag_len_est".format(config["out_dir"])
-    #    frag_len_est = config["out_dir"]+"last_alignments/{sample_id}.frag_len_est"
-    #    reference_flag = config["out_dir"]+"last_index/index.done",
-    #    reads1 = get_read1,
-    #    reads2 = get_read2,
-    #    frag_len_est= config["out_dir"]+"last_alignments/{sample_id}.frag_len_est",
-    #    scoring = config["out_dir"]+"last_sample/scoring_scheme",
+
     params:
         last_index_basename="{0}/last_index/index".format(config["out_dir"]),
         mean = getMean,
