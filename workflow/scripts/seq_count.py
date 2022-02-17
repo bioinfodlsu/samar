@@ -61,11 +61,10 @@ def unique_pass(input_alns,counts_dict):
             alns2 = [Tab_alns(x) for x in block if x[6] == key+"/2"] #alignments of read 2
 
             
-            #if its a unique pair
+            #if it's a unique pair
             if len(alns1) ==  1 and len(alns2) == 1 :
                 conc,frag_start,frag_end = is_concordant(alns1[0], alns2[0])
                 if conc:
-                   #unique[alns1[0].ref][-1] += 1 #update count
                    counts_dict[alns1[0].ref].unique_count += 1
                    for i in range(frag_start,frag_end+1): #assuming gapless aln
                        #unique[alns1[0].ref][i] +=1
@@ -149,7 +148,6 @@ def main(input_alns, out_counts, frag_len_mean, frag_len_std,reference):
     Does 2 passes over the alignments.
     In the first pass, we only consider reads with unique alignments. Counts are recorded in the dict unique.
     In the second pass, we consider the remaining reads. Counts are distributed based on the proportion of uniquely mapped reads.
-    For any read pair, if both reads have
     '''
 
     global lower, upper
@@ -197,7 +195,7 @@ def main(input_alns, out_counts, frag_len_mean, frag_len_std,reference):
     for counts in counts_dict.values():
         if scaling_factor != 0:
             counts.tpm = counts.final_count_norm * 1000000/scaling_factor
-    
+
     # print("after tpm")
     # for k,v in counts_dict.items():
     #     print(k)
@@ -211,7 +209,7 @@ def main(input_alns, out_counts, frag_len_mean, frag_len_std,reference):
 
         for key, counts in sorted(counts_dict.items()):
             writer.writerow([key,counts.length,counts.length,counts.tpm,counts.final_count])
-    
+
     return counts_dict
 
 #%%
@@ -226,19 +224,3 @@ if __name__ == "__main__":
     
     args = parser.parse_args()
     main(args.input_file,args.output_file, args.frag_len_mean, args.frag_len_std, args.reference)
-
-#%%
-#counts=main("/home/anish/Desktop/last_multimap/1mil.tab","out",82,8)
-#
-# uf={}
-# for k,v in final.items():
-#      uf[k] = (unique[k][-2],v)
-#
-#
-# import matplotlib.pyplot as plt
-# import numpy as np
-#
-# u_1 = [ item for item in u if item < 10 ]
-# f_1 = [ item for item in f if item < 10 ]
-#
-# plt.hist([u_1,f_1],bins=10, label=['u','f'])
