@@ -31,8 +31,10 @@ def FileFilter(infile):
         if not line.startswith("#"):
             yield line.split()
 
-def is_concordant(p1,p2): #given two alignments, returns (True,start,end) if concordant and (False,0,0) otherwise
-    # 1:ref id, 9: query strand, 2: ref start pos 3: ref aln length
+def is_concordant(p1,p2):
+    '''
+    given two alignments, returns (True,start,end) if concordant and (False,0,0) otherwise
+    '''
     if (p1.ref == p2.ref and p1.query_strand != p2.query_strand): #same ref seq and different strands
 
         if p1.query_strand == '+' and p1.ref_start < p2.ref_start:
@@ -45,14 +47,12 @@ def is_concordant(p1,p2): #given two alignments, returns (True,start,end) if con
 
     return(False,0,0)
 
+def update_unique_single_end(aln,counts_dict):
+    counts_dict[aln.ref].unique_count += 1 #update count
+    for i in range(aln.ref_start,aln.ref_start + aln.ref_aln_width):
+        counts_dict[aln.ref].count_array[i] +=1
+
 def unique_pass(input_alns,counts_dict):
-
-    def update_unique_single_end(aln):
-        counts_dict[aln.ref].unique_count += 1 #update count
-        for i in range(aln.ref_start,aln.ref_start + aln.ref_aln_width):
-            counts_dict[aln.ref].count_array[i] +=1
-
-
     with open(input_alns) as infile:
         for key,group in itertools.groupby(FileFilter(infile), lambda x : x[6].rsplit("/",1)[0]):
 
@@ -61,7 +61,7 @@ def unique_pass(input_alns,counts_dict):
             alns2 = [Tab_alns(x) for x in block if x[6] == key+"/2"] #alignments of read 2
 
             
-            #if its a unique pair
+            #if it's a unique pair
             if len(alns1) ==  1 and len(alns2) == 1 :
                 conc,frag_start,frag_end = is_concordant(alns1[0], alns2[0])
                 if conc:
@@ -74,12 +74,12 @@ def unique_pass(input_alns,counts_dict):
 
             #if only read1 has an alignment and it's unique
             elif len(alns1) == 1 and len(alns2) == 0:
-                update_unique_single_end(alns1[0])
+                update_unique_single_end(alns1[0],counts_dict)
 
 
             #if only read2 has an alignment and it's unique
             elif len(alns2) == 1 and len(alns1) == 0:
-                update_unique_single_end(alns2[0])
+                update_unique_single_end(alns2[0],counts_dict)
 
     #done with first pass. 1. set final_count to be unique_count and 2.normalize unique counts by length (of non-zero counts)
     for k,v in counts_dict.items():
@@ -93,20 +93,45 @@ def unique_pass(input_alns,counts_dict):
         else:
             v.unique_count_norm = 0
 
-def rescue_pass(input_alns,counts_dict):
 
-    def update_rescue_single_end(alns):
-        ref_ids = [aln.ref for aln in alns]
-        unique_norm_counts = [counts_dict[ref_id].unique_count_norm for ref_id in ref_ids]
-        denom = sum(unique_norm_counts)
-        if denom != 0 :
-            props = [c/denom for c in unique_norm_counts]
-            for i,ref_id in enumerate(ref_ids):
-                counts_dict[ref_id].final_count += props[i]
+def unique_pass_SE(input_alns, counts_dict):
+
+    with open(input_alns) as infile:
+        for key, group in itertools.groupby(FileFilter(infile), lambda x: x[6]):
+
+            alns = [Tab_alns(x) for x in list(group) ]  # alignments of read 1
+
+            # if it's a unique mapping
+            if len(alns) == 1 :
+                update_unique_single_end(alns[0],counts_dict)
+
+
+    # done with first pass. 1. set final_count to be unique_count and 2.normalize unique counts by length (of non-zero counts)
+    for k, v in counts_dict.items():
+
+        v.final_count = v.unique_count
+
+        # nonZeros = len(v)-1-v[:-1].count(0)
+        nonZeros = len(v.count_array) - v.count_array.count(0)
+        if v.unique_count != 0:
+            v.unique_count_norm = v.unique_count / nonZeros
         else:
-            denom = len(ref_ids)
-            for ref_id in ref_ids:
-                counts_dict[ref_id].final_count += 1/denom
+            v.unique_count_norm = 0
+
+def update_rescue_single_end(alns,counts_dict):
+    ref_ids = [aln.ref for aln in alns]
+    unique_norm_counts = [counts_dict[ref_id].unique_count_norm for ref_id in ref_ids]
+    denom = sum(unique_norm_counts)
+    if denom != 0 :
+        props = [c/denom for c in unique_norm_counts]
+        for i,ref_id in enumerate(ref_ids):
+            counts_dict[ref_id].final_count += props[i]
+    else:
+        denom = len(ref_ids)
+        for ref_id in ref_ids:
+            counts_dict[ref_id].final_count += 1/denom
+
+def rescue_pass(input_alns,counts_dict):
 
     with open(input_alns) as infile:
         for key,group in itertools.groupby(FileFilter(infile), lambda x : x[6].rsplit("/",1)[0]):
@@ -135,74 +160,63 @@ def rescue_pass(input_alns,counts_dict):
                         counts_dict[ref_id].final_count += 1/denom
 
             elif len(alns1) > 1 and len(alns2) == 0:
-                update_rescue_single_end(alns1)
+                update_rescue_single_end(alns1,counts_dict)
 
             elif len(alns2) > 1 and len(alns1) == 0:
-                update_rescue_single_end(alns2)
+                update_rescue_single_end(alns2,counts_dict)
 
             else:
                 continue
 
+def rescue_pass_SE(input_alns,counts_dict):
 
-def main(input_alns, out_counts, frag_len_mean, frag_len_std,reference):
+    with open(input_alns) as infile:
+        for key,group in itertools.groupby(FileFilter(infile), lambda x : x[6]):
+
+            alns = [Tab_alns(x) for x in list(group)]
+
+            if len(alns) > 1 :
+                update_rescue_single_end(alns,counts_dict)
+            else:
+                continue
+
+def main(reference,input_alns, out_counts, single_end, frag_len_mean=0, frag_len_std=0):
     '''
     Does 2 passes over the alignments.
     In the first pass, we only consider reads with unique alignments. Counts are recorded in the dict unique.
-    In the second pass, we consider the remaining reads. Counts are distributed based on the proportion of uniquely mapped reads.
-    For any read pair, if both reads have
+    In the second pass, we consider the remaining reads. Counts are distributed based on the proportion of uniquely mapped reads normalized by length.
     '''
 
-    global lower, upper
-    lower = frag_len_mean - 3* frag_len_std
-    upper = frag_len_mean + 3* frag_len_std
-
-    counts_dict = {} #key = peptide ID, value = object of class Counts
-    
-    #initiate counts_dict
-    for seq_record in SeqIO.parse(reference,"fasta"):
+    # initiate counts_dict
+    counts_dict = {}  # key = peptide ID, value = object of class Counts
+    for seq_record in SeqIO.parse(reference, "fasta"):
         counts_dict[seq_record.id] = Counts(len(seq_record))
 
-    #first pass
-    unique_pass(input_alns,counts_dict)
-    
-    # print("after first pass")
-    # for k,v in counts_dict.items():
-    #     print(k)
-    #     print(v)
+    if single_end == "True" : #Looking at you, argparse.
+        unique_pass_SE(input_alns,counts_dict)
+        rescue_pass_SE(input_alns,counts_dict)
+    elif single_end == "False":
+        global lower, upper
+        lower = frag_len_mean - 3* frag_len_std
+        upper = frag_len_mean + 3* frag_len_std
 
- 
-    #second pass
-    rescue_pass(input_alns,counts_dict)
-    # print("after rescue pass")
-    # for k,v in counts_dict.items():
-    #     print(k)
-    #     print(v)
+        unique_pass(input_alns,counts_dict)
+        rescue_pass(input_alns,counts_dict)
+    else:
+        sys.exit("Unexpected string for endendness")
 
- 
-    
     #compute TPM
     #read/length
     scaling_factor = 0.0
     for counts in counts_dict.values():
         counts.final_count_norm = counts.final_count/counts.length
         scaling_factor += counts.final_count_norm
-    
-    # print(scaling_factor)
-    
-    # print("after normalized final")
-    # for k,v in counts_dict.items():
-    #     print(k)
-    #     print(v)
-    
+
     for counts in counts_dict.values():
         if scaling_factor != 0:
             counts.tpm = counts.final_count_norm * 1000000/scaling_factor
-    
-    # print("after tpm")
-    # for k,v in counts_dict.items():
-    #     print(k)
-    #     print(v)
-          
+
+
     with open(out_counts,"w") as tab_file:
         writer = csv.writer(tab_file, delimiter='\t')
 
@@ -211,34 +225,19 @@ def main(input_alns, out_counts, frag_len_mean, frag_len_std,reference):
 
         for key, counts in sorted(counts_dict.items()):
             writer.writerow([key,counts.length,counts.length,counts.tpm,counts.final_count])
-    
+
     return counts_dict
 
 #%%
 if __name__ == "__main__":
+
     parser = argparse.ArgumentParser()
-    parser.add_argument('input_file',help="alignments in tab format")
+    parser.add_argument('reference',help="fasta file containing the reference protein sequences")
+    parser.add_argument('input_file', help="alignments in tab format")
     parser.add_argument('output_file',help="output file containing counts")
-    #parser.add_argument('--multi_mapping',action='store_true')
+    parser.add_argument('single_end',help="true if reads are single-end and not paired-end")
     parser.add_argument('--frag_len_mean',type=float,help="mean of fragment length, when translated. Use the same value as last-pair-probs")
     parser.add_argument('--frag_len_std',type=float,help="standard deviation of fragment length, when translated. Use the same value as last-pair-probs") 
-    parser.add_argument('--reference',help="fasta file containing the reference protein sequences")
-    
-    args = parser.parse_args()
-    main(args.input_file,args.output_file, args.frag_len_mean, args.frag_len_std, args.reference)
 
-#%%
-#counts=main("/home/anish/Desktop/last_multimap/1mil.tab","out",82,8)
-#
-# uf={}
-# for k,v in final.items():
-#      uf[k] = (unique[k][-2],v)
-#
-#
-# import matplotlib.pyplot as plt
-# import numpy as np
-#
-# u_1 = [ item for item in u if item < 10 ]
-# f_1 = [ item for item in f if item < 10 ]
-#
-# plt.hist([u_1,f_1],bins=10, label=['u','f'])
+    args = parser.parse_args()
+    main(args.reference,args.input_file,args.output_file, args.single_end, args.frag_len_mean, args.frag_len_std )
