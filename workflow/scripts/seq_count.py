@@ -192,18 +192,18 @@ def main(reference,input_alns, out_counts, single_end, frag_len_mean=0, frag_len
     for seq_record in SeqIO.parse(reference, "fasta"):
         counts_dict[seq_record.id] = Counts(len(seq_record))
 
-    if single_end == True:
-        print("inside single end")
+    if single_end == "True" : #Looking at you, argparse.
         unique_pass_SE(input_alns,counts_dict)
         rescue_pass_SE(input_alns,counts_dict)
-    else:
+    elif single_end == "False":
         global lower, upper
         lower = frag_len_mean - 3* frag_len_std
         upper = frag_len_mean + 3* frag_len_std
 
-        print("inside paired end")
         unique_pass(input_alns,counts_dict)
         rescue_pass(input_alns,counts_dict)
+    else:
+        sys.exit("Unexpected string for endendness")
 
     #compute TPM
     #read/length
@@ -240,5 +240,4 @@ if __name__ == "__main__":
     parser.add_argument('--frag_len_std',type=float,help="standard deviation of fragment length, when translated. Use the same value as last-pair-probs") 
 
     args = parser.parse_args()
-    print(args.single_end)
     main(args.reference,args.input_file,args.output_file, args.single_end, args.frag_len_mean, args.frag_len_std )

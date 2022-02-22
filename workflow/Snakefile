@@ -56,21 +56,6 @@ def getScoring(wildcards):
     else:
         return "BL62"
 
-# #Function that returns input for LAST align rules
-# def get_input_align_last(wildcards):
-#     input_dict = {}
-#     input_dict["reference_flag"] = "{}/last_index/index.done".format(config["out_dir"])
-#     input_dict["reads1"] = get_read1(wildcards)
-#     if len(config["reads"][wildcards.sample_id]) == 2:  #reads are in paired-end format
-#         input_dict["reads2"] = get_read2(wildcards)
-#     #input_dict["frag_len_est"] = config["out_dir"]+"last_alignments/{sample_id}.frag_len_est"
-#     # if "training" in config:
-#     #     if config["training"].lower() != "no":
-#     #         input_dict["scoring"] = "{0}/score_sample/scoring_scheme".format(config["out_dir"])
-#     # else:
-#     #     input_dict["scoring"] = "{0}/score_sample/scoring_scheme".format(config["out_dir"])
-#     return input_dict
-
 
 #conditional definition of DE rule
 if "deanalysis" not in config:
@@ -78,8 +63,6 @@ if "deanalysis" not in config:
 
 if config["deanalysis"].lower() == "no":
     all_input = expand("{out_dir}/counts/{sample_id}/{sample_id}.counts",out_dir=[config["out_dir"]],sample_id=config["reads"].keys())
-    # all_input = expand("{out_dir}/last_alignments/{sample_id}.tab",out_dir=[config["out_dir"]],sample_id=config[
-    #     "reads"].keys())
 
 elif config["deanalysis"].lower() == "yes":
     deseqOutput = ["{0}/DEanalysis/DE_count_summary.txt".format(config["out_dir"]),
@@ -126,7 +109,7 @@ elif config["deanalysis"].lower() == "yes":
             factors = str(config["factors"]).replace("'","\""),
         conda:
             "env/r.yaml"
-        shell:
+        shell: #TODO allow gene-isoform mapping input
             "Rscript {last_deseq2} --in_dir '{params.count_dir}' --factors '{params.factors}'"
             " --design '{params.design}' --sample_info '{params.sample_info}' --out_dir '{params.outdir}'"
 
@@ -143,7 +126,7 @@ rule last_db: #Rule for constructing LAST index
     params:
        index_basename="{0}/last_index/index".format(config["out_dir"])
     conda:
-        "env/last.yaml"
+        "env/lastal.yaml"
     shell:
        "lastdb -p {params.index_basename} {input.reference}"
        #"lastdb {params.index_basename} {input.reference}"
@@ -160,7 +143,7 @@ rule last_score_training: #Rule for training score parameters
     output:
         "{0}/score_sample/scoring_scheme".format(config["out_dir"])
     conda:
-        "env/lastxpy.yaml"
+        "env/lastal.yaml"
     shell:
         """
         head -n 400000 {input.query} > {params.last_sample1}
@@ -173,9 +156,6 @@ rule last_frag_stat_est: #Rule for estimating length distribution of paired-end 
         reads1=lambda wildcards: config["reads"][wildcards.sample_id][0],
         reads2=lambda wildcards: config["reads"][wildcards.sample_id][1],
         reference_flag = "{0}/last_index/index.done".format(config["out_dir"])
-        #reads1 = get_read1,
-        #reads2 = get_read2,
-        #scoring = config["out_dir"]+"last_sample/scoring_scheme",
     params:
         last_index_basename= "{0}/last_index/index".format(config["out_dir"]),
         last_al = "{0}/last_alignments".format(config["out_dir"]),
@@ -183,7 +163,7 @@ rule last_frag_stat_est: #Rule for estimating length distribution of paired-end 
     output :
         frag_len_est="{0}/last_alignments/{{sample_id}}.frag_len_est".format(config["out_dir"])
     conda:
-        "env/last.yaml"
+        "env/lastal.yaml"
     shell:
         """
         mkfifo {params.last_al}/{wildcards.sample_id}_1
@@ -198,7 +178,7 @@ ruleorder: align_last > align_last_SE
 
 rule align_last: #Rule for aligning paired-end RNA-seq reads to protein database
     input:
-        reads1 = lambda wildcards: config["reads"][wildcards.sample_id][0],
+        reads1 = lambda wildcards: config["reads"][wildcards.sample_id][0], #Looking at you, snakemake.
         reads2 = lambda wildcards: config["reads"][wildcards.sample_id][1],
         frag_len_est = "{0}/last_alignments/{{sample_id}}.frag_len_est".format(config["out_dir"]),
         reference_flag= "{0}/last_index/index.done".format(config["out_dir"])
@@ -228,7 +208,8 @@ rule align_last_SE:
     conda:
         "env/lastal.yaml"
     shell:
-        "{convert_fastq_fasta_SE} {input.reads1} | lastal -p {params.scoring} -F20 {params.last_index_basename}  | maf-convert tab > {output} "
+        """{convert_fastq_fasta_SE} {input.reads1} | parallel --gnu --pipe -L2 -j {threads} "lastal -p {params.scoring} -F20 {params.last_index_basename} | last-map-probs -m 0.95 | maf-convert tab" > {output} """
+        #"{convert_fastq_fasta_SE} {input.reads1} | lastal -p {params.scoring} -F20 {params.last_index_basename} | last-map-probs -m 0.95 | maf-convert tab > {output} "
 
 
 rule count_last: #Rule for getting count data from LAST alignments
