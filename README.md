@@ -49,7 +49,9 @@ git clone https://bitbucket.org/project_samar/samar.git
 # 2. Quickstart Usage Guide
 
 # 2.1. Input
-The pipeline requires, at the very least: (1) paired-end RNA-seq fastq (or fasta) reads and (2) a reference protein database in fasta format.  These and other input parameters are specified via a YAML-format config file -- a template *config_template.yam* is provided in the config folder. Section~3 below provides a list of all parameters that can be defined in the config file.
+The pipeline requires, at the very least: (1) RNA-seq fastq (or fasta) reads and (2) a reference protein database in fasta format.  
+These and other input parameters are specified via a YAML-format config file -- a template *config_template.yaml* is provided in the config folder. 
+Section~3 below provides a list of all parameters that can be defined in the config file.
 
 # 2.2. Running the pipeline
 After constructing a config.yaml file and with the snakemake conda environment you created earlier activated, you can call the pipeline from the top-level directory of SAMAR:
@@ -60,7 +62,9 @@ snakemake --configfile <my_config.yaml> --use-conda --cores all
 Please see 2.4 below for a simple example.
 
 # 2.3. Ouput
-Output is stored inside the folder specified in the *out_dir* entry of the config file. Inside it, the alignments can be found in the *last_alignments* folder, the count data in the *counts* folder, and the results of differential expression analysis in the *DEanalysis* folder. The contents of the *DEanalysis* folder are explained through an example below.
+Output is stored inside the folder specified in the *out_dir* entry of the config file. 
+Inside it, the alignments can be found in the *last_alignments* folder, the count data in the *counts* folder, and the results of differential expression analysis in the *DEanalysis* folder. 
+The contents of the *DEanalysis* folder are explained through an example below.
 
 # 2.4. Example
 A toy example is provided in the *test_data* folder. In this example, there are 6 RNA-seq samples, of which 3 are the "control" group replicates and 3 are the "treated" group replicates. The paths to the files and information about the experiment design is specified in  *config_test.yaml*.
