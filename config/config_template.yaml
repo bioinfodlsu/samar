@@ -1,6 +1,6 @@
 # Template config file.
 # Here you can specify the paths to the input and output, specify the experiment design for differential express analysis, and other additional parameters.
-# Arguments are specified in a key:value format, do NOT change the key names.
+# Arguments are specified in a key:value format, do NOT change the key names (except for sample id).
 
 #####################
 # Input and output
@@ -15,18 +15,18 @@ reference_p: /path/to/reference/proteome
 # It is recommended to provide absolute paths, i.e. beginning with root (/).
 # Else, paths are considered to be relative to SAMAR top-level directory.
 reads:
-  sample_1: #Sample 1. Provide the paired files as a list of 2 items.
-    [ /path/to/sample1_L.fastq, /path/to/smaple1_R.fastq ] # Do not remove the [ and ]. Separate the file names by a comma.
+  sample_1: #Sample 1. You can change the id to something else.
+    [ /path/to/sample1_L.fastq, /path/to/smaple1_R.fastq ] # Do not remove the [ and ]. If paired-end, provide 2 files, separated a comma. If single-end, just 1 file, no comma.
   sample_2: #Sample 2.
-    [ /path/to/sample2_L.fastq, /path/to/sample2_R.fastq]
+    [ /path/to/sample2_L.fastq, /path/to/sample2_R.fastq ]
   sample_3: #Sample 3.
-    [ /path/to/sample3_L.fastq, /path/to/sample3_R.fastq]
+    [ /path/to/sample3_L.fastq, /path/to/sample3_R.fastq ]
   sample_4: #Sample 4.
-    [ /path/to/sample4_L.fastq, /path/to/sample4_R.fastq]
+    [ /path/to/sample4_L.fastq, /path/to/sample4_R.fastq ]
   sample_5: #Sample 5.
-    [ /path/to/sample5_L.fastq, /path/to/sample5_R.fastq]
+    [ /path/to/sample5_L.fastq, /path/to/sample5_R.fastq ]
   sample_6: #Sample 6.
-    [ /path/to/sample6_L.fastq, /path/to/sample6_R.fastq]
+    [ /path/to/sample6_L.fastq, /path/to/sample6_R.fastq ]
   #add more samples as needed
 
 ## Output folder
