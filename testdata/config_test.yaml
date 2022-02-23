@@ -15,9 +15,13 @@ reference_p: testdata/ref.fa
 ## RNA-seq reads
 # It is recommended to provide absolute paths, i.e. beginning with root (/).
 # Else, paths are considered to be relative to SAMAR top-level directory.
+
+##Uncomment below to change reads file type from fastq (default) to fasta
+#filetype: "fasta"
+
 reads:
-  sample_1: #Sample 1. Do not rename this.
-    [ testdata/reads_1_1.fastq, testdata/reads_1_2.fastq ] # Do not remove the [ and ]. Separate the file names by a comma.
+  sample_1: #Sample 1. You can change the id to something else, but make sure the same id is used in the sample_info specification below.
+    [ testdata/reads_1_1.fastq, testdata/reads_1_2.fastq ] # Do not remove the [ and ]. If paired-end, provide 2 files, separated a comma. If single-end, just 1 file, no comma.
   sample_2: #Sample 2.
     [ testdata/reads_2_1.fastq, testdata/reads_2_2.fastq]
   sample_3: #Sample 3.
@@ -35,8 +39,7 @@ reads:
 out_dir: test_output
 
 
-##Uncomment below to change reads file type from fastq (default) to fasta
-#filetype: "fasta"
+
 
 #####################
 # Training the scoring scheme
