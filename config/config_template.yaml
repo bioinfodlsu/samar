@@ -14,8 +14,13 @@ reference_p: /path/to/reference/proteome
 ## RNA-seq reads
 # It is recommended to provide absolute paths, i.e. beginning with root (/).
 # Else, paths are considered to be relative to SAMAR top-level directory.
+
+
+## Reads file type : fasta or fastq. If not specified, defaults to fastq.
+#filetype: "fasta"
+
 reads:
-  sample_1: #Sample 1. You can change the id to something else.
+  sample_1: #Sample 1. You can change the id to something else, but make sure the same id is used in the sample_info specification below.
     [ /path/to/sample1_L.fastq, /path/to/smaple1_R.fastq ] # Do not remove the [ and ]. If paired-end, provide 2 files, separated a comma. If single-end, just 1 file, no comma.
   sample_2: #Sample 2.
     [ /path/to/sample2_L.fastq, /path/to/sample2_R.fastq ]
@@ -34,8 +39,7 @@ reads:
 # Else, paths are considered to be relative to SAMAR top-level directory.
 out_dir: /path/to/output/folder
 
-## Reads file type : fasta or fastq. If not specified, defaults to fastq.
-#filetype: "fasta"
+
 
 #####################
 # Training the scoring scheme
@@ -60,7 +64,7 @@ out_dir: /path/to/output/folder
 # Each factor combination has 2 replicates.
 factors: [Strain, Treatment] #list of names of the factors/co-variates.
 sample_info: #
-  sample_1 : [wild_type,control] #list of names of level of the factors, which the sample corresponds to.
+  sample_1 : [wild_type,control] #list of names of level of the factors, which the sample corresponds to.Make sure sample id matches the one in the reads specification above
   sample_2 : [wild_type,control]
   sample_3 : [wild_type,treatment]
   sample_4 : [wild_type,treatment]
