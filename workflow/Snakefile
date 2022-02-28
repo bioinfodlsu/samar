@@ -187,7 +187,7 @@ rule align_last: #Rule for aligning paired-end RNA-seq reads to protein database
         mean = getMean,
         std = getSTD,
         scoring = getScoring
-    threads: workflow.cores/len(config["reads"])
+    threads: max(1,workflow.cores/len(config["reads"]))
     output:
         "{0}/last_alignments/{{sample_id}}.tab".format(config["out_dir"])
     conda:
@@ -202,7 +202,7 @@ rule align_last_SE:
     params:
         last_index_basename="{0}/last_index/index".format(config["out_dir"]),
         scoring = getScoring
-    threads: workflow.cores / len(config["reads"])
+    threads: max(1,workflow.cores / len(config["reads"]))
     output:
         "{0}/last_alignments/{{sample_id}}.tab".format(config["out_dir"])
     conda:
