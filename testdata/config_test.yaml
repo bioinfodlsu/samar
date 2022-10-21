@@ -55,7 +55,7 @@ training : "no"
 ## Enable/disable differential expression analysis.
 ##Possible values: yes or no.
 ##Defaults to "yes" if unspecified, in which case you must specify the "factors", "sample_info", "design" entries below.
-deanalysis : "no"
+deanalysis : "yes"
 
 #Sample information
 factors: [Treatment] #list of names of the factors/covariates.

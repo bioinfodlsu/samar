@@ -166,13 +166,17 @@ rule last_frag_stat_est: #Rule for estimating length distribution of paired-end 
         "env/lastal.yaml"
     shell:
         """
-        mkfifo {params.last_al}/{wildcards.sample_id}_1
-        mkfifo {params.last_al}/{wildcards.sample_id}_2
-        gzip -cdf {input.reads1} | head -n 400000 > {params.last_al}/{wildcards.sample_id}_1 &
-        gzip -cdf {input.reads2} | head -n 400000 > {params.last_al}/{wildcards.sample_id}_2 &
-        {interleave} {params.last_al}/{wildcards.sample_id}_1 {params.last_al}/{wildcards.sample_id}_2 | lastal -i1 -p {params.scoring} -F15 {params.last_index_basename} | last-pair-probs -e > {output.frag_len_est}
-        rm {params.last_al}/{wildcards.sample_id}_1 {params.last_al}/{wildcards.sample_id}_2
+        gzip -cdf {input.reads1} | head -n 400000 > {params.last_al}/{wildcards.sample_id}_sample_1
+        gzip -cdf {input.reads2} | head -n 400000 > {params.last_al}/{wildcards.sample_id}_sample_2
+        {interleave} {params.last_al}/{wildcards.sample_id}_sample_1 {params.last_al}/{wildcards.sample_id}_sample_2 | lastal -i1 -p {params.scoring} -F15 {params.last_index_basename} | last-pair-probs -e > {output.frag_len_est}
         """
+        #mkfifo {params.last_al}/{wildcards.sample_id}_1
+        #mkfifo {params.last_al}/{wildcards.sample_id}_2
+        #gzip -cdf {input.reads1} | head -n 400000 > {params.last_al}/{wildcards.sample_id}_1 &
+        #gzip -cdf {input.reads2} | head -n 400000 > {params.last_al}/{wildcards.sample_id}_2 &
+        #{interleave} {params.last_al}/{wildcards.sample_id}_1 {params.last_al}/{wildcards.sample_id}_2 | lastal -i1 -p {params.scoring} -F15 {params.last_index_basename} | last-pair-probs -e > {output.frag_len_est}
+        #rm {params.last_al}/{wildcards.sample_id}_1 {params.last_al}/{wildcards.sample_id}_2
+        #"""
 
 ruleorder: align_last > align_last_SE
 
@@ -187,7 +191,7 @@ rule align_last: #Rule for aligning paired-end RNA-seq reads to protein database
         mean = getMean,
         std = getSTD,
         scoring = getScoring
-    threads: max(1,workflow.cores/len(config["reads"]))
+    #threads: max(1,workflow.cores/len(config["reads"]))
     output:
         "{0}/last_alignments/{{sample_id}}.tab".format(config["out_dir"])
     conda:
@@ -203,7 +207,7 @@ rule align_last_SE:
     params:
         last_index_basename="{0}/last_index/index".format(config["out_dir"]),
         scoring = getScoring
-    threads: max(1,workflow.cores / len(config["reads"]))
+    #threads: max(1,workflow.cores / len(config["reads"]))
     output:
         "{0}/last_alignments/{{sample_id}}.tab".format(config["out_dir"])
     conda:
