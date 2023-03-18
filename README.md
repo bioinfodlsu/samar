@@ -42,9 +42,9 @@ $ snakemake --help
 ```
 
 # 1.3. Download the pipeline
-Download SAMAR from the online  [repository](https://bitbucket.org/refeless_rnaseq/pipeline), or using the command line:
+Download SAMAR from the online  [repository](https://github.com/bioinfodlsu/samar.git), or using the command line:
 ```
-git clone https://bitbucket.org/project_samar/samar.git
+git clone https://github.com/bioinfodlsu/samar.git
 ```
 # 2. Quickstart Usage Guide
 
