@@ -30,7 +30,7 @@ $ conda list
 Snakemake recommends installation via Conda:
 ```
 $ conda install -c conda-forge mamba
-$ mamba create -c conda-forge -c bioconda -n snakemake snakemake
+$ mamba create -c conda-forge -c bioconda -n snakemake snakemake=7.15
 ```
 This creates an isolated enviroment containing the latest Snakemake. To activate it:
 ```
@@ -57,7 +57,7 @@ Section~3 below provides a list of all parameters that can be defined in the con
 After constructing a config.yaml file and with the snakemake conda environment you created earlier activated, you can call the pipeline from the top-level directory of SAMAR:
 ```
 cd samar 
-snakemake --configfile <my_config.yaml> --use-conda --cores all 
+snakemake --configfile <my_config.yaml> --use-conda -p --cores all 
 ```
 Please see 2.4 below for a simple example.
 
