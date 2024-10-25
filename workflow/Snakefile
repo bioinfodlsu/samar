@@ -7,17 +7,17 @@ if "filetype" not in config: #default to fastq if not specified
 if "filetype" in config:
     if config["filetype"] == "fasta":
         convert_fastq_fasta_SE = "cat" #TODO: test this
-        interleave = srcdir("scripts/fasta-interleave.sh")
+        interleave = os.path.join(workflow.basedir,"scripts","fasta-interleave.sh")
         file_type = "fasta"
     elif config["filetype"] == "fastq":
-        convert_fastq_fasta_SE = srcdir("scripts/convert_SE_fastq-fasta.sh")
-        interleave = srcdir("scripts/fastq-to-fasta-interleave.sh")
+        convert_fastq_fasta_SE = os.path.join("workflow","scripts","convert_SE_fastq-fasta.sh")
+        interleave = os.path.join("workflow","scripts","fastq-to-fasta-interleave.sh")
         file_type = "fastq"
 
 #paths to scripts
-seq_count = srcdir("scripts/seq_count.py")
-trans_6frame = srcdir("scripts/translate_6frames.py")
-last_deseq2 = srcdir("scripts/last2deseq.R")
+#seq_count = srcdir("scripts/seq_count.py")
+#trans_6frame = srcdir("scripts/translate_6frames.py")
+#last_deseq2 = srcdir("scripts/last2deseq.R")
 
 
 #Input functions
@@ -102,6 +102,7 @@ elif config["deanalysis"].lower() == "yes":
         output:
             deseqOutput,
         params:
+            script = os.path.join(workflow.basedir,"scripts","last2deseq.R"),
             count_dir="{0}/counts".format(config["out_dir"]),
             outdir = "{0}/DEanalysis".format(config["out_dir"]),
             sample_info = str(dict(config["sample_info"])).replace("'","\""),
@@ -110,7 +111,7 @@ elif config["deanalysis"].lower() == "yes":
         conda:
             "env/r.yaml"
         shell: #TODO allow gene-isoform mapping input
-            "Rscript {last_deseq2} --in_dir '{params.count_dir}' --factors '{params.factors}'"
+            "Rscript {params.script} --in_dir '{params.count_dir}' --factors '{params.factors}'"
             " --design '{params.design}' --sample_info '{params.sample_info}' --out_dir '{params.outdir}'"
 
 
@@ -136,6 +137,7 @@ rule last_score_training: #Rule for training score parameters
         reference_flag = "{0}/last_index/index.done".format(config["out_dir"]),
         query = config["reads"][list(config["reads"].keys())[0]][0],
     params:
+        script = os.path.join(workflow.basedir,"scripts","translate_6frames.py"),
         last_index_basename="{0}/last_index/index".format(config["out_dir"]),
         last_sample1="{0}/score_sample/sample_1.sample.fa".format(config["out_dir"]),
         last_trans_sample1="{0}/score_sample/translated.fasta".format(config["out_dir"]),
@@ -147,7 +149,7 @@ rule last_score_training: #Rule for training score parameters
     shell:
         """
         head -n 400000 {input.query} > {params.last_sample1}
-        python {trans_6frame} {params.last_sample1} {params.file_type} {params.last_trans_sample1}
+        python {params.script} {params.last_sample1} {params.file_type} {params.last_trans_sample1}
         last-train --revsym --matsym --gapsym --sample-number=600000 -S0 {params.last_index_basename} {params.last_trans_sample1}> {output}
         """
 
@@ -222,6 +224,7 @@ rule count_last: #Rule for getting count data from LAST alignments
         alignments = "{0}/last_alignments/{{sample_id}}.tab".format(config["out_dir"]),
         reference = config["reference_p"]
     params:
+        script = os.path.join(workflow.basedir,"scripts","seq_count.py"),
         mean = getMean,
         std = getSTD,
         singleEnd = lambda wildcards: len (config["reads"][wildcards.sample_id]) == 1
@@ -230,4 +233,4 @@ rule count_last: #Rule for getting count data from LAST alignments
     conda:
         "env/counting.yaml"
     shell:
-        "python {seq_count} {input.reference} {input.alignments} {output} {params.singleEnd} --frag_len_mean {params.mean} --frag_len_std {params.std} "
+        "python {params.script} {input.reference} {input.alignments} {output} {params.singleEnd} --frag_len_mean {params.mean} --frag_len_std {params.std} "

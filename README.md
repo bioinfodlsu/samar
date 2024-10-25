@@ -19,18 +19,16 @@ This pipeline requires the package manager **Conda** and the workflow management
 All other dependencies are handled automatically by Snakemake.
 
 ## 1.1. Install Conda 
-Download Miniconda3  installer for Linux from  [here](https://docs.conda.io/en/latest/miniconda.html#linux-installers).
-Installation instructions are [here](https://conda.io/projects/conda/en/latest/user-guide/install/linux.html).
-Once installation is complete, you can test your Miniconda installation by running:
+Conda can be downloaded and installed from [Miniforge](https://github.com/conda-forge/miniforge).
+Once installation is complete, you can test your Conda installation by running:
 ```
 $ conda list
 ```
 
-## 1.2. Install Snakemake
+## 1.2. Install Snakemake 
 Snakemake recommends installation via Conda:
 ```
-$ conda install -c conda-forge mamba
-$ mamba create -c conda-forge -c bioconda -n snakemake snakemake=7.15
+$ conda create -c conda-forge -c bioconda -n snakemake snakemake=8.24.1
 ```
 This creates an isolated enviroment containing the latest Snakemake. To activate it:
 ```
@@ -45,7 +43,20 @@ $ snakemake --help
 Download SAMAR from the online  [repository](https://github.com/bioinfodlsu/samar.git), or using the command line:
 ```
 git clone https://github.com/bioinfodlsu/samar.git
+cd samar
 ```
+## 1.4. Check if SAMAR works
+A toy example is provided in the `test_data` folder. 
+In this example, there are 6 RNA-seq samples, of which 3 are the "control" group replicates and 3 are the "treated" group replicates. 
+The paths to the files and information about the experiment design is specified in config_test.yaml. 
+From the top-level directory of SAMAR_lite, run:
+```
+$ snakemake -p --configfile testdata/config_test.yaml --use-conda --cores all 
+```
+Warning: This might take some time (5-10 mins), since for the first run, Snakemake needs to install all dependencies prior to running the actual computations. 
+
+Once the run is complete, you can check if some outputs are generated in the newly created `test_output` folder.
+The contents of the output folder are described in the section below.
 # 2. Quickstart Usage Guide
 
 # 2.1. Input
@@ -64,22 +75,13 @@ Please see 2.4 below for a simple example.
 # 2.3. Ouput
 Output is stored inside the folder specified in the *out_dir* entry of the config file. 
 Inside it, the alignments can be found in the *last_alignments* folder, the count data in the *counts* folder, and the results of differential expression analysis in the *DEanalysis* folder. 
-The contents of the *DEanalysis* folder are explained through an example below.
 
-# 2.4. Example
-A toy example is provided in the *test_data* folder. In this example, there are 6 RNA-seq samples, of which 3 are the "control" group replicates and 3 are the "treated" group replicates. The paths to the files and information about the experiment design is specified in  *config_test.yaml*.
-From the top directory of the pipeline and with the snakemake conda environment activated, run:
-```
-$ snakemake --configfile testdata/config_test.yaml --use-conda --cores all 
-```
-Warning: This might take some time, since for the first run, Snakemake needs to install all dependencies prior to running the actual computations. 
-
-Once the run is complete, you can check the output in the folder *test_output* which is created in the top-level directory of SAMAR. Inside the *DEanalysis* folder in *test_output*, you will find the following files:
+Inside the *DEanalysis* folder in *test_output*, you will find the following files:
 - *DE_count_summary.txt*, which contains the count of up- and downregulated genes
 - *Test_result-Group_treated_vs_control.csv*, which contains the table of the results of hypothesis testing for each gene in the reference. 
 - *DESeq2_fit.RDS* which can be loaded using R, if further analysis is required.
 
-For the example run, the first file reveals that only 1 gene is differentially expressed; 
+For the example run above, the first file reveals that only 1 gene is differentially expressed; 
 while the second file allows the identification of this *gene* to be *UPI0000000AE2* which is upregulated (*log2FoldChange* > 0 and *padj* < 0.01).
 
 In general, the number of hypothesis tests depends on the number of factors, the number of levels per factor, and the design (i.e. the factorial model that is hypothesized to cause a difference in gene expression). These have to be specified in the config file using the keywords: *factors* , *sample_info*, and *design*, respectively.  
