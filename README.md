@@ -39,7 +39,7 @@ To test snakemake installation
 $ snakemake --help
 ```
 
-# 1.3. Download the pipeline
+## 1.3. Download the pipeline
 Download SAMAR from the online  [repository](https://github.com/bioinfodlsu/samar.git), or using the command line:
 ```
 git clone https://github.com/bioinfodlsu/samar.git
@@ -56,7 +56,7 @@ $ snakemake -p --configfile testdata/config_test.yaml --use-conda --cores all
 Warning: This might take some time (5-10 mins), since for the first run, Snakemake needs to install all dependencies prior to running the actual computations. 
 
 Once the run is complete, you can check if some outputs are generated in the newly created `test_output` folder.
-The contents of the output folder are described in the section below.
+The contents of the output folder are described in the Output section below.
 # 2. Quickstart Usage Guide
 
 # 2.1. Input
@@ -70,7 +70,6 @@ After constructing a config.yaml file and with the snakemake conda environment y
 cd samar 
 snakemake --configfile <my_config.yaml> --use-conda -p --cores all 
 ```
-Please see 2.4 below for a simple example.
 
 # 2.3. Ouput
 Output is stored inside the folder specified in the *out_dir* entry of the config file. 
