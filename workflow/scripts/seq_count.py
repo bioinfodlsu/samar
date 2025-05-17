@@ -2,10 +2,15 @@
 import itertools
 import csv
 import argparse
+import sys
 from Bio import SeqIO
+from typing import List, TypedDict, Union, Optional, Dict, Any, Tuple
+from arguments import ArgumentType, addArgument
 
 class Tab_alns:
-    def __init__(self,tab_line):
+    """
+    """
+    def __init__(self, tab_line):
         self.ref = tab_line[1]
         self.ref_start = int(tab_line[2])
         self.ref_aln_width = int(tab_line[3])
@@ -16,7 +21,7 @@ class Tab_alns:
 class Counts:
     def  __init__(self,ref_length): 
         self.length = ref_length
-        self.count_array = [0]*ref_length
+        self.count_array = [0] * ref_length
         self.unique_count = 0.0
         self.unique_count_norm = 0.0
         self.final_count = 0.0
@@ -26,26 +31,27 @@ class Counts:
     def __str__(self):
         return 'length:{self.length}    unique_count:{self.unique_count}    unique_count_norm:{self.unique_count_norm}   final_count:{self.final_count}    final_count_norm:{self.final_count_norm}    tpm:{self.tpm}'.format(self=self)
 
-def FileFilter(infile):
+def file_filter(infile):
     for line in infile:
         if not line.startswith("#"):
             yield line.split()
 
-def is_concordant(p1,p2):
-    '''
-    given two alignments, returns (True,start,end) if concordant and (False,0,0) otherwise
+def is_concordant(p1, p2) -> Tuple[bool, int, int]:
+    '''Given two alignments, it outputs the start and end point strands if concordant.
+
+    Returns:
+        (True, start, end) if concordant and (False,0,0) otherwise
     '''
     if (p1.ref == p2.ref and p1.query_strand != p2.query_strand): #same ref seq and different strands
-
         if p1.query_strand == '+' and p1.ref_start < p2.ref_start:
             if (lower <= p2.ref_start + p2.ref_aln_width - p1.ref_start <= upper):
-                return (True, p1.ref_start, p2.ref_start + p2.ref_aln_width-1)
+                return (True, p1.ref_start, p2.ref_start + p2.ref_aln_width - 1)
 
         elif p2.query_strand == '+' and p2.ref_start < p1.ref_start:
             if (lower <= p1.ref_start + p1.ref_aln_width - p2.ref_start <= upper):
-                return (True, p2.ref_start, p1.ref_start + p1.ref_aln_width-1 )
+                return (True, p2.ref_start, p1.ref_start + p1.ref_aln_width - 1 )
 
-    return(False,0,0)
+    return (False, 0, 0)
 
 def update_unique_single_end(aln,counts_dict):
     counts_dict[aln.ref].unique_count += 1 #update count
@@ -54,7 +60,7 @@ def update_unique_single_end(aln,counts_dict):
 
 def unique_pass(input_alns,counts_dict):
     with open(input_alns) as infile:
-        for key,group in itertools.groupby(FileFilter(infile), lambda x : x[6].rsplit("/",1)[0]):
+        for key,group in itertools.groupby(file_filter(infile), lambda x : x[6].rsplit("/",1)[0]):
 
             block = list(group)
             alns1 = [Tab_alns(x) for x in block if x[6] == key+"/1"] #alignments of read 1
@@ -97,7 +103,7 @@ def unique_pass(input_alns,counts_dict):
 def unique_pass_SE(input_alns, counts_dict):
 
     with open(input_alns) as infile:
-        for key, group in itertools.groupby(FileFilter(infile), lambda x: x[6]):
+        for key, group in itertools.groupby(file_filter(infile), lambda x: x[6]):
 
             alns = [Tab_alns(x) for x in list(group) ]  # alignments of read 1
 
@@ -134,12 +140,13 @@ def update_rescue_single_end(alns,counts_dict):
 def rescue_pass(input_alns,counts_dict):
 
     with open(input_alns) as infile:
-        for key,group in itertools.groupby(FileFilter(infile), lambda x : x[6].rsplit("/",1)[0]):
+        for key,group in itertools.groupby(file_filter(infile), lambda x : x[6].rsplit("/",1)[0]):
 
             block = list(group)
 
-            alns1 = [Tab_alns(x) for x in block if x[6] == key+"/1"] #alignments of read 1
-            alns2 = [Tab_alns(x) for x in block if x[6] == key+"/2"] #alignments of read 2
+            alns1 = [Tab_alns(x) for x in block if x[6] == key + "/1"] #alignments of read 1
+            
+            alns2 = [Tab_alns(x) for x in block if x[6] == key + "/2"] #alignments of read 2
 
             if len(alns1) > 1 and len(alns2) > 1:
                 ref_ids = [] #counts need to be updated for these
@@ -168,10 +175,10 @@ def rescue_pass(input_alns,counts_dict):
             else:
                 continue
 
-def rescue_pass_SE(input_alns,counts_dict):
+def rescue_pass_SE(input_alns, counts_dict):
 
     with open(input_alns) as infile:
-        for key,group in itertools.groupby(FileFilter(infile), lambda x : x[6]):
+        for key,group in itertools.groupby(file_filter(infile), lambda x : x[6]):
 
             alns = [Tab_alns(x) for x in list(group)]
 
@@ -180,21 +187,27 @@ def rescue_pass_SE(input_alns,counts_dict):
             else:
                 continue
 
-def main(reference,input_alns, out_counts, single_end, frag_len_mean=0, frag_len_std=0):
-    '''
-    Does 2 passes over the alignments.
-    In the first pass, we only consider reads with unique alignments. Counts are recorded in the dict unique.
-    In the second pass, we consider the remaining reads. Counts are distributed based on the proportion of uniquely mapped reads normalized by length.
-    '''
+def main(reference: str, input_alns: str, out_counts: str, single_end: str, frag_len_mean: int = 0, frag_len_std: int = 0) -> Dict[str, Any]:
+    """
+    Args:
+        reference (str): The Reference file
+        input_alns (str): Input Alignment file
+        out_counts (str): Out file
+        single_end (str): 
+        frag_len_mean (int, optional): Defaults to 0.
+        frag_len_std (int, optional): Defaults to 0.
 
+    Returns:
+        Dict[str, Any]: _description_
+    """
     # initiate counts_dict
     counts_dict = {}  # key = peptide ID, value = object of class Counts
     for seq_record in SeqIO.parse(reference, "fasta"):
         counts_dict[seq_record.id] = Counts(len(seq_record))
 
     if single_end == "True" : #Looking at you, argparse.
-        unique_pass_SE(input_alns,counts_dict)
-        rescue_pass_SE(input_alns,counts_dict)
+        unique_pass_SE(input_alns, counts_dict)
+        rescue_pass_SE(input_alns, counts_dict)
     elif single_end == "False":
         global lower, upper
         lower = frag_len_mean - 3* frag_len_std
@@ -228,16 +241,35 @@ def main(reference,input_alns, out_counts, single_end, frag_len_mean=0, frag_len
 
     return counts_dict
 
+
 #%%
 if __name__ == "__main__":
-
-    parser = argparse.ArgumentParser()
-    parser.add_argument('reference',help="fasta file containing the reference protein sequences")
-    parser.add_argument('input_file', help="alignments in tab format")
-    parser.add_argument('output_file',help="output file containing counts")
-    parser.add_argument('single_end',help="true if reads are single-end and not paired-end")
-    parser.add_argument('--frag_len_mean',type=float,help="mean of fragment length, when translated. Use the same value as last-pair-probs")
-    parser.add_argument('--frag_len_std',type=float,help="standard deviation of fragment length, when translated. Use the same value as last-pair-probs") 
-
+    parser_arguments: List[ArgumentType] = [
+    {
+        'name': 'reference',
+        'help': 'fasta file containing the reference protein sequences'
+    },{
+        'name': 'input_file',
+        'help': 'alignments in tab format'
+    },{
+        'name': 'output_file',
+        'help': 'output file containing counts'
+    },{
+        'name': 'single_end',
+        'help': 'true if reads are single-end and not paired-end'
+    },{
+        'name': '--frag_len_mean',
+        'help': 'mean of fragment length, when translated. Use the same value as last-pair-probs',
+        'type': float
+    },{
+        'name': '--frag_len_std',
+        'help': 'standard deviation of fragment length, when translated. Use the same value as last-pair-probs',
+        'type': float
+    }
+    ]
+    # CLI Argument Mapping
+    parser = addArgument(parser_arguments, argparse.ArgumentParser())
+    
     args = parser.parse_args()
-    main(args.reference,args.input_file,args.output_file, args.single_end, args.frag_len_mean, args.frag_len_std )
+    
+    main(args.reference, args.input_file, args.output_file, args.single_end, args.frag_len_mean, args.frag_len_std )
